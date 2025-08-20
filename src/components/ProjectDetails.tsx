@@ -12,9 +12,10 @@ interface ProjectDetailsProps {
   project: Project
   onBack: () => void
   onUpdateProject: (project: Project) => void
+  onOpenRenderPreview?: (shot: Shot) => void
 }
 
-export default function ProjectDetails({ project, onBack, onUpdateProject }: ProjectDetailsProps) {
+export default function ProjectDetails({ project, onBack, onUpdateProject, onOpenRenderPreview }: ProjectDetailsProps) {
   const [activeTab, setActiveTab] = useState("overview")
   const [editingScript, setEditingScript] = useState(false)
 
@@ -33,52 +34,39 @@ export default function ProjectDetails({ project, onBack, onUpdateProject }: Pro
   const mockShots: Shot[] = [
     {
       id: 'shot-001',
+      projectId: project.id,
       sequence: 1,
       title: "Introduction to Maxwell's Equations",
+      description: "Opening sequence with title and mathematical foundations",
       duration: 15,
       renderer: 'manim',
       status: 'approved',
-      code: `class MaxwellIntro(Scene):
-    def construct(self):
-        title = Text("Maxwell's Equations", font_size=48)
-        self.play(Write(title))
-        self.wait(2)`,
-      frames: 450,
-      qaMetrics: {
-        ssim: 0.92,
-        opticalFlow: 0.88,
-        llavaScore: 0.95,
-        feedback: "Clear title animation with proper spacing and timing"
-      },
-      renderPath: "/renders/shot-001/"
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
     },
     {
-      id: 'shot-002',
+      id: 'shot-002', 
+      projectId: project.id,
       sequence: 2,
       title: "Electric Field Visualization",
+      description: "3D visualization of electric field lines around point charges",
       duration: 25,
       renderer: 'blender',
-      status: 'qa-review',
-      code: `# Blender Python script for electric field
-import bpy
-import bmesh
-# Field line generation...`,
-      frames: 750,
-      qaMetrics: {
-        ssim: 0.78,
-        opticalFlow: 0.82,
-        llavaScore: 0.75,
-        feedback: "Field lines need better contrast, consider adjusting material properties"
-      }
+      status: 'qa',
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date().toISOString()
     },
     {
       id: 'shot-003',
+      projectId: project.id,
       sequence: 3,
       title: "Charge Distribution Simulation",
+      description: "Particle simulation showing charge interactions",
       duration: 30,
       renderer: 'taichi',
       status: 'rendering',
-      frames: 900
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     }
   ]
 
@@ -318,40 +306,42 @@ The first equation, Gauss's law, relates electric field to electric charge...
                 </CardHeader>
 
                 <CardContent className="space-y-4">
-                  {shot.qaMetrics && (
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div className="text-center">
-                        <div className="text-muted-foreground">SSIM Score</div>
-                        <div className="font-mono text-lg">{shot.qaMetrics.ssim}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-muted-foreground">Optical Flow</div>
-                        <div className="font-mono text-lg">{shot.qaMetrics.opticalFlow}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-muted-foreground">LLaVA Score</div>
-                        <div className="font-mono text-lg">{shot.qaMetrics.llavaScore}</div>
-                      </div>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="text-center">
+                      <div className="text-muted-foreground">Duration</div>
+                      <div className="font-mono text-lg">{shot.duration}s</div>
                     </div>
-                  )}
+                    <div className="text-center">
+                      <div className="text-muted-foreground">Renderer</div>
+                      <div className="font-mono text-lg capitalize">{shot.renderer}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-muted-foreground">Updated</div>
+                      <div className="font-mono text-sm">{new Date(shot.updatedAt).toLocaleDateString()}</div>
+                    </div>
+                  </div>
 
-                  {shot.qaMetrics?.feedback && (
+                  {shot.description && (
                     <div className="p-3 rounded bg-muted/50 text-sm">
-                      <div className="font-medium mb-1">QA Feedback</div>
-                      <div className="text-muted-foreground">{shot.qaMetrics.feedback}</div>
+                      <div className="font-medium mb-1">Description</div>
+                      <div className="text-muted-foreground">{shot.description}</div>
                     </div>
                   )}
 
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => onOpenRenderPreview && onOpenRenderPreview(shot)}
+                    >
                       <Eye size={14} />
-                      Preview
+                      Render Preview
                     </Button>
                     <Button size="sm" variant="outline">
                       <Code size={14} />
                       View Code
                     </Button>
-                    {shot.status === 'failed' && (
+                    {shot.status === 'error' && (
                       <Button size="sm">
                         Regenerate
                       </Button>
@@ -364,26 +354,34 @@ The first equation, Gauss's law, relates electric field to electric charge...
         </TabsContent>
 
         <TabsContent value="qa" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold font-sans">Quality Assurance</h3>
+            <Button size="sm" variant="outline">
+              <Monitor size={14} />
+              Open Full QA Dashboard
+            </Button>
+          </div>
+          
           <Card>
             <CardHeader>
-              <CardTitle className="font-sans">Quality Assurance Dashboard</CardTitle>
+              <CardTitle className="font-sans">Automated Analysis Results</CardTitle>
               <CardDescription>
-                Automated review using LLaVA vision model and signal analysis
+                LLaVA vision model and signal analysis for all rendered shots
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 rounded border">
                   <div className="text-2xl font-bold text-green-600">92%</div>
-                  <div className="text-sm text-muted-foreground">Avg SSIM Score</div>
+                  <div className="text-sm text-muted-foreground">Avg Visual Quality</div>
                 </div>
                 <div className="text-center p-4 rounded border">
                   <div className="text-2xl font-bold text-blue-600">85%</div>
-                  <div className="text-sm text-muted-foreground">LLaVA Approval</div>
+                  <div className="text-sm text-muted-foreground">Physics Accuracy</div>
                 </div>
                 <div className="text-center p-4 rounded border">
-                  <div className="text-2xl font-bold text-orange-600">2</div>
-                  <div className="text-sm text-muted-foreground">Shots Pending</div>
+                  <div className="text-2xl font-bold text-orange-600">3</div>
+                  <div className="text-sm text-muted-foreground">Issues Found</div>
                 </div>
               </div>
 
@@ -396,6 +394,23 @@ The first equation, Gauss's law, relates electric field to electric charge...
                 <div className="text-xs text-muted-foreground">
                   Target: 85% for production release
                 </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Recent QA Issues</div>
+                {[
+                  { type: 'Visual Clarity', shot: 'Shot 2', description: 'Field line contrast could be improved' },
+                  { type: 'Physics Accuracy', shot: 'Shot 3', description: 'Vector magnitudes need verification' },
+                  { type: 'Motion Smoothness', shot: 'Shot 1', description: 'Minor jitter in camera movement' }
+                ].map((issue, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 rounded bg-muted/50">
+                    <div>
+                      <div className="text-sm font-medium">{issue.type}</div>
+                      <div className="text-xs text-muted-foreground">{issue.description}</div>
+                    </div>
+                    <Badge variant="outline" className="text-xs">{issue.shot}</Badge>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>

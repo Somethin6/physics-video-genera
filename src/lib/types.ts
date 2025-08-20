@@ -2,9 +2,10 @@ export interface Project {
   id: string
   title: string
   topic: string
-  duration: number // in minutes
+  duration: number
+  description?: string
   createdAt: string
-  status: 'initializing' | 'generating-outline' | 'generating-script' | 'rendering-shots' | 'qa-review' | 'voice-alignment' | 'final-assembly' | 'completed' | 'error'
+  status: 'initializing' | 'planning' | 'scripting' | 'rendering' | 'qa' | 'completed' | 'error'
   progress: {
     outline: number
     script: number
@@ -13,68 +14,89 @@ export interface Project {
     qa: number
     assembly: number
   }
-  settings?: {
-    quality: 'draft' | 'standard' | 'high'
-    renderer: 'auto' | 'manim' | 'blender' | 'taichi'
-    resolution: '720p' | '1080p' | '4k'
-  }
-  error?: string
   shots?: Shot[]
-  script?: ScriptLine[]
 }
 
 export interface Shot {
   id: string
+  projectId: string
   sequence: number
   title: string
+  description: string
   duration: number
+  status: 'planning' | 'scripting' | 'rendering' | 'qa' | 'approved' | 'error'
   renderer: 'manim' | 'blender' | 'taichi' | 'matplotlib'
-  status: 'pending' | 'generating' | 'rendering' | 'qa-review' | 'approved' | 'failed'
-  code?: string
-  frames?: number
-  qaMetrics?: {
-    ssim: number
-    opticalFlow: number
-    llavaScore: number
-    feedback: string
-  }
-  renderPath?: string
+  frames?: RenderFrame[]
+  qaResults?: QAResult[]
+  createdAt: string
+  updatedAt: string
 }
 
-export interface ScriptLine {
+export interface RenderFrame {
   id: string
-  sequence: number
-  text: string
-  duration: number
-  shotId?: string
-  beats: TimingBeat[]
+  shotId: string
+  frameNumber: number
+  timestamp: number
+  imagePath: string
+  thumbnail: string
+  status: 'rendering' | 'completed' | 'error' | 'analyzing'
+  qaScore?: number
+  issues?: FrameIssue[]
+  metadata: {
+    renderTime: number
+    resolution: { width: number; height: number }
+    renderer: string
+    settings: Record<string, any>
+  }
 }
 
-export interface TimingBeat {
-  word: string
-  startTime: number
-  endTime: number
-  emphasis?: 'normal' | 'strong' | 'subtle'
+export interface FrameIssue {
+  id: string
+  frameId: string
+  type: 'physics_accuracy' | 'visual_clarity' | 'composition' | 'technical' | 'continuity'
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  description: string
+  suggestion: string
+  region?: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }
+  confidence: number
+  detectedAt: string
 }
 
-export interface SystemMetrics {
-  gpu: {
-    usage: number
-    memory: number
-    temperature: number
+export interface QAResult {
+  id: string
+  shotId: string
+  overallScore: number
+  frameCount: number
+  passedFrames: number
+  issues: FrameIssue[]
+  analysisType: 'vision_llm' | 'ssim' | 'optical_flow' | 'composite'
+  completedAt: string
+  processingTime: number
+}
+
+export interface RenderPreview {
+  id: string
+  projectId: string
+  shotId: string
+  frames: RenderFrame[]
+  currentFrame: number
+  playbackRate: number
+  analysisMode: 'overview' | 'detailed' | 'comparison'
+  filters: {
+    issueTypes: string[]
+    severity: string[]
+    confidence: number
   }
-  cpu: {
-    usage: number
-    memory: number
-  }
-  models: {
-    neox20b: 'loading' | 'ready' | 'error'
-    llava: 'loading' | 'ready' | 'error'
-    whisper: 'loading' | 'ready' | 'error'
-  }
-  pipeline: {
-    activeProjects: number
-    queueLength: number
-    avgRenderTime: number
-  }
+}
+
+export interface ComparisonView {
+  referenceFrame: RenderFrame
+  currentFrame: RenderFrame
+  diffHighlight: boolean
+  syncedScrubbing: boolean
 }

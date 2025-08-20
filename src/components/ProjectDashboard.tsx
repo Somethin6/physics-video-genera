@@ -14,10 +14,12 @@ import {
   Microphone,
   CheckCircle,
   Warning,
-  Clock
+  Clock,
+  Monitor
 } from '@phosphor-icons/react'
-import { Project } from '@/lib/types'
+import { Project, Shot } from '@/lib/types'
 import ProjectDetails from '@/components/ProjectDetails'
+import RenderPreviewSystem from '@/components/RenderPreviewSystem'
 
 interface ProjectDashboardProps {
   projects: Project[]
@@ -26,6 +28,7 @@ interface ProjectDashboardProps {
 
 export default function ProjectDashboard({ projects, onUpdateProject }: ProjectDashboardProps) {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [showRenderPreview, setShowRenderPreview] = useState<Shot | null>(null)
 
   const getStatusColor = (status: Project['status']) => {
     switch (status) {
@@ -59,12 +62,22 @@ export default function ProjectDashboard({ projects, onUpdateProject }: ProjectD
   const activeProjects = projects.filter(p => !['completed', 'error'].includes(p.status))
   const completedProjects = projects.filter(p => p.status === 'completed')
 
+  if (showRenderPreview) {
+    return (
+      <RenderPreviewSystem 
+        shot={showRenderPreview}
+        onClose={() => setShowRenderPreview(null)}
+      />
+    )
+  }
+
   if (selectedProject) {
     return (
       <ProjectDetails 
         project={selectedProject} 
         onBack={() => setSelectedProject(null)}
         onUpdateProject={onUpdateProject}
+        onOpenRenderPreview={setShowRenderPreview}
       />
     )
   }
