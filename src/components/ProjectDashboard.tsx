@@ -21,6 +21,7 @@ import {
 import { Project, Shot } from '@/lib/types'
 import ProjectDetails from '@/components/ProjectDetails'
 import RenderPreviewSystem from '@/components/RenderPreviewSystem'
+import QADashboard from '@/components/QADashboard'
 import QAInstructions from '@/components/QAInstructions'
 
 interface ProjectDashboardProps {

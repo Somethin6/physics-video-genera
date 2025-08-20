@@ -188,36 +188,7 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
               </TabsContent>
               
               <TabsContent value="analysis" className="h-full m-0 p-4 overflow-auto">
-                <div className="space-y-6">
-                  <FrameAnalyzer
-                    shotId={shot.id}
-                    frames={frames.map(f => f.imageUrl)}
-                    scriptChecks={[
-                      "Are mathematical equations clearly visible and correct?",
-                      "Do vector arrows point in the correct direction?", 
-                      "Is the physics demonstration accurate to the script?",
-                      "Are visual elements properly aligned and positioned?"
-                    ]}
-                    onAnalysisComplete={(analysis) => {
-                      console.log('Frame analysis complete:', analysis)
-                    }}
-                  />
-                  
-                  <QADashboard
-                    shotId={shot.id}
-                    onTriggerCodeRevision={(issues) => {
-                      console.log('Triggering code revision for issues:', issues)
-                    }}
-                  />
-                  
-                  <AutoFixEngine
-                    shotId={shot.id}
-                    issues={currentFrameData?.issues?.map(i => i.description) || []}
-                    onRevisionComplete={(revision) => {
-                      console.log('Code revision complete:', revision)
-                    }}
-                  />
-                </div>
+                <QADashboard shotId={shot.id} />
               </TabsContent>
               
               <TabsContent value="metrics" className="h-full m-0 p-4 overflow-auto">

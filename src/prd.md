@@ -1,15 +1,16 @@
-# Physics Video Pipeline - Enhanced Frame-by-Frame QA System
+# Physics Video Pipeline - Comprehensive Frame-by-Frame QA Analysis System
 
 ## Core Purpose & Success
 
-**Mission Statement**: Create a comprehensive, AI-driven render preview system with frame-by-frame quality analysis for physics video production, ensuring scientific accuracy and visual excellence through automated LLaVA vision analysis and signal processing.
+**Mission Statement**: Create a bulletproof, AI-driven render preview system with comprehensive frame-by-frame quality analysis that ensures physics accuracy and visual excellence through multi-modal AI analysis (LLaVA vision model, signal processing, automated issue detection) before final production.
 
 **Success Indicators**: 
-- Frame-by-frame QA analysis identifies physics inaccuracies before final render
-- LLaVA vision model correctly validates scientific demonstrations with >90% accuracy
-- Automated issue detection reduces manual QA time by 80%
-- Signal analysis metrics (SSIM, optical flow) catch technical quality issues
-- Comprehensive reporting enables data-driven render optimization
+- Frame-by-frame QA analysis identifies physics inaccuracies with >90% precision before final render
+- LLaVA vision model correctly validates scientific demonstrations with >85% accuracy
+- Signal analysis (SSIM, optical flow) catches motion and stability issues with <5% false positives
+- Automated issue detection reduces manual QA time by 80% while improving quality by 25%
+- Comprehensive reporting enables data-driven render optimization and workflow improvement
+- Self-healing autofix pipeline reduces re-render cycles by 60%
 
 **Experience Qualities**: Precise, Intelligent, Comprehensive
 
@@ -21,30 +22,45 @@
 
 ## Essential Features
 
-### Frame-by-Frame QA Inspector
-- **Functionality**: Deep analysis of individual frames with LLaVA vision model integration
-- **Purpose**: Identify physics inaccuracies, mathematical errors, and visual clarity issues at the frame level
-- **Success Criteria**: Detects physics violations with >85% accuracy, provides actionable feedback
+### Integrated QA Dashboard
+- **Functionality**: Unified interface combining frame analysis, LLaVA vision, and signal processing
+- **Purpose**: Central command center for all quality analysis activities with real-time metrics
+- **Success Criteria**: Reduces context switching, provides comprehensive quality overview in single interface
 
-### Automated Batch Analysis Engine  
-- **Functionality**: Process entire shot sequences with AI-powered quality assessment
-- **Purpose**: Scale quality analysis across hundreds of frames efficiently
-- **Success Criteria**: Completes full shot analysis in <5 minutes, maintains consistent quality scoring
+### Frame-by-Frame QA Analysis Engine
+- **Functionality**: Deep inspection of individual frames with interactive playback controls and issue overlay
+- **Purpose**: Identify physics inaccuracies, mathematical errors, and visual clarity issues at granular level
+- **Success Criteria**: Detects physics violations with >85% accuracy, provides actionable feedback per frame
+
+### LLaVA Vision Analysis Integration
+- **Functionality**: AI-powered visual analysis using local LLaVA model for physics accuracy validation
+- **Purpose**: Automated detection of physics principles, equation correctness, and visual element assessment
+- **Success Criteria**: Analyzes frames in <5 seconds, provides confidence-scored feedback with specific issue localization
+
+### Signal Analysis & Motion Quality Assessment
+- **Functionality**: SSIM analysis, optical flow computation, and motion continuity validation
+- **Purpose**: Ensure technical quality of frame sequences and smooth animation transitions
+- **Success Criteria**: Detects motion issues, frame stability problems, and compression artifacts with >90% accuracy
+
+### Automated Batch Processing Engine  
+- **Functionality**: Process entire shot sequences with parallel AI-powered quality assessment
+- **Purpose**: Scale quality analysis across hundreds of frames efficiently without manual intervention
+- **Success Criteria**: Completes full 120-frame shot analysis in <3 minutes, maintains consistent scoring methodology
 
 ### Real-time Preview with QA Overlay
-- **Functionality**: Live playback with quality indicators and issue highlighting
-- **Purpose**: Immediate visual feedback during review process
-- **Success Criteria**: Smooth 30fps playback with overlay performance impact <10%
+- **Functionality**: Live playback with quality indicators, issue highlighting, and interactive frame navigation
+- **Purpose**: Immediate visual feedback during review process with contextual issue display
+- **Success Criteria**: Smooth 30fps playback with overlay performance impact <10%, responsive issue region highlighting
 
-### Comprehensive QA Metrics Dashboard
-- **Functionality**: Statistical analysis of quality trends, issue patterns, and performance metrics
-- **Purpose**: Data-driven insights for render optimization and workflow improvement
-- **Success Criteria**: Provides actionable insights that improve overall shot quality by 25%
+### Comprehensive Metrics & Reporting
+- **Functionality**: Statistical analysis, quality trends, issue pattern recognition, and exportable reports
+- **Purpose**: Data-driven insights for render optimization and continuous workflow improvement
+- **Success Criteria**: Provides actionable insights that improve overall shot quality scores by 25%
 
 ### Physics-Specific Validation Rules
-- **Functionality**: Domain-specific checks for electromagnetic fields, equations, vector directions
-- **Purpose**: Ensure scientific accuracy in educational physics content
-- **Success Criteria**: Catches 95% of common physics visualization errors
+- **Functionality**: Domain-specific checks for electromagnetic fields, equations, vector directions, and units
+- **Purpose**: Ensure scientific accuracy in educational physics content through specialized validation
+- **Success Criteria**: Catches 95% of common physics visualization errors, validates mathematical notation standards
 
 ## Design Direction
 

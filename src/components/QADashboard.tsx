@@ -1,390 +1,371 @@
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
   Eye, 
-  Code, 
-  Repeat, 
-  CheckCircle2, 
-  XCircle, 
-  TrendUp,
-  Activity,
-  Image as ImageIcon
+  BarChart3, 
+  Brain, 
+  PlayCircle,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  Target,
+  Zap
 } from '@phosphor-icons/react'
-
-interface QAResult {
-  frameNumber: number
-  ssimScore: number
-  semanticPassed: boolean
-  opticalFlowValid: boolean
-  issues: string[]
-  suggestions: string[]
-}
-
-interface QASession {
-  id: string
-  shotId: string
-  timestamp: string
-  totalFrames: number
-  passedFrames: number
-  avgSSIM: number
-  results: QAResult[]
-  codeRevisions: number
-  status: 'analyzing' | 'completed' | 'requires_fixes'
-}
+import FrameQAAnalysis from '@/components/FrameQAAnalysis'
+import LLaVAAnalysis from '@/components/LLaVAAnalysis'
+import SignalAnalysis from '@/components/SignalAnalysis'
+import { useRenderPreview } from '@/lib/renderAnalysis'
+import { LLaVAAnalysis as LLaVAAnalysisType, SignalAnalysis as SignalAnalysisType, FrameIssue } from '@/lib/types'
 
 interface QADashboardProps {
   shotId: string
-  onTriggerCodeRevision: (issues: string[]) => void
 }
 
-export default function QADashboard({ shotId, onTriggerCodeRevision }: QADashboardProps) {
-  const [activeSession, setActiveSession] = useState<QASession | null>(null)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysisProgress, setAnalysisProgress] = useState(0)
+export default function QADashboard({ shotId }: QADashboardProps) {
+  const {
+    frames,
+    currentFrame,
+    setCurrentFrame,
+    analysisResults,
+    isAnalyzing
+  } = useRenderPreview(shotId)
 
-  const startQAAnalysis = async () => {
-    setIsAnalyzing(true)
-    setAnalysisProgress(0)
+  const [activeAnalysis, setActiveAnalysis] = useState<'frame' | 'llava' | 'signal'>('frame')
+  const [qaOverview, setQAOverview] = useState({
+    totalFrames: 0,
+    analyzedFrames: 0,
+    passedFrames: 0,
+    criticalIssues: 0,
+    overallScore: 0
+  })
 
-    // Simulated frame analysis with LLaVA and SSIM
-    const totalFrames = 120 // Typical 4-second shot at 30fps
-    const results: QAResult[] = []
-    
-    for (let frame = 0; frame < totalFrames; frame++) {
-      // Simulate SSIM calculation
-      const ssimScore = Math.random() * 0.4 + 0.6 // 0.6-1.0 range
-      
-      // Simulate semantic checks with LLaVA
-      const semanticChecks = [
-        "Are mathematical equations clearly visible and correct?",
-        "Do vector arrows point in the correct direction?", 
-        "Is the physics demonstration accurate to the script?",
-        "Are visual elements properly aligned and positioned?"
-      ]
+  // Calculate QA metrics
+  const updateQAOverview = () => {
+    const totalFrames = frames.length
+    const analyzedFrames = frames.filter(f => f.qaScore !== undefined).length
+    const passedFrames = frames.filter(f => (f.qaScore || 0) > 0.8).length
+    const criticalIssues = frames.reduce((sum, f) => 
+      sum + (f.issues?.filter(i => i.severity === 'critical').length || 0), 0
+    )
+    const overallScore = analyzedFrames > 0 
+      ? frames.reduce((sum, f) => sum + (f.qaScore || 0), 0) / analyzedFrames
+      : 0
 
-      const semanticResults = await Promise.all(
-        semanticChecks.slice(0, Math.ceil(Math.random() * 4)).map(async (question) => {
-          const prompt = spark.llmPrompt`Analyze this physics animation frame:
-          
-          Shot: ${shotId}
-          Frame: ${frame}
-          Question: ${question}
-          
-          Answer YES/NO with confidence level and any issues found.`
-          
-          try {
-            const response = await spark.llm(prompt, "gpt-4o", true)
-            const parsed = JSON.parse(response)
-            return {
-              passed: parsed.answer?.toLowerCase().includes('yes') || Math.random() > 0.15,
-              confidence: parsed.confidence || Math.floor(Math.random() * 20 + 80),
-              issues: parsed.issues || []
-            }
-          } catch {
-            return {
-              passed: Math.random() > 0.15,
-              confidence: Math.floor(Math.random() * 20 + 75),
-              issues: []
-            }
-          }
-        })
-      )
-
-      const semanticPassed = semanticResults.every(r => r.passed)
-      const opticalFlowValid = frame === 0 || Math.random() > 0.05
-      
-      const issues: string[] = []
-      const suggestions: string[] = []
-
-      if (ssimScore < 0.8) {
-        issues.push("Low visual quality detected")
-        suggestions.push("Increase render samples or resolution")
-      }
-      
-      if (!semanticPassed) {
-        issues.push("Semantic verification failed")
-        suggestions.push("Review scene elements alignment with script")
-      }
-      
-      if (!opticalFlowValid) {
-        issues.push("Motion discontinuity detected")
-        suggestions.push("Smooth keyframe transitions")
-      }
-
-      results.push({
-        frameNumber: frame,
-        ssimScore,
-        semanticPassed,
-        opticalFlowValid,
-        issues,
-        suggestions
-      })
-
-      setAnalysisProgress(((frame + 1) / totalFrames) * 100)
-      
-      // Simulate processing delay
-      if (frame % 10 === 0) {
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-    }
-
-    const passedFrames = results.filter(r => 
-      r.ssimScore > 0.8 && r.semanticPassed && r.opticalFlowValid
-    ).length
-
-    const avgSSIM = results.reduce((sum, r) => sum + r.ssimScore, 0) / results.length
-
-    const session: QASession = {
-      id: `qa-${Date.now()}`,
-      shotId,
-      timestamp: new Date().toISOString(),
+    setQAOverview({
       totalFrames,
+      analyzedFrames,
       passedFrames,
-      avgSSIM,
-      results,
-      codeRevisions: 0,
-      status: passedFrames / totalFrames > 0.85 ? 'completed' : 'requires_fixes'
-    }
-
-    setActiveSession(session)
-    setIsAnalyzing(false)
-  }
-
-  const triggerCodeRevision = () => {
-    if (!activeSession) return
-
-    const allIssues = activeSession.results
-      .flatMap(r => r.issues)
-      .filter((issue, idx, arr) => arr.indexOf(issue) === idx) // Deduplicate
-
-    onTriggerCodeRevision(allIssues)
-    
-    setActiveSession({
-      ...activeSession,
-      codeRevisions: activeSession.codeRevisions + 1
+      criticalIssues,
+      overallScore
     })
   }
 
-  const getStatusColor = (status: QASession['status']) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800'
-      case 'requires_fixes': return 'bg-red-100 text-red-800'
-      case 'analyzing': return 'bg-blue-100 text-blue-800'
-    }
+  // Handle LLaVA analysis completion
+  const handleLLaVAAnalysis = (analysis: LLaVAAnalysisType, issues: FrameIssue[]) => {
+    // This would integrate LLaVA results into the main QA system
+    console.log('LLaVA analysis completed:', analysis, issues)
+    updateQAOverview()
   }
+
+  // Handle Signal analysis completion
+  const handleSignalAnalysis = (analysis: SignalAnalysisType) => {
+    // This would integrate signal analysis results
+    console.log('Signal analysis completed:', analysis)
+    updateQAOverview()
+  }
+
+  const getScoreColor = (score: number) => {
+    if (score >= 0.9) return 'text-green-600'
+    if (score >= 0.7) return 'text-yellow-600'
+    return 'text-red-600'
+  }
+
+  const getStatusIcon = (score: number, issues: number) => {
+    if (issues === 0 && score > 0.9) return <CheckCircle className="text-green-500" size={20} />
+    if (issues > 0 || score < 0.7) return <XCircle className="text-red-500" size={20} />
+    return <AlertTriangle className="text-yellow-500" size={20} />
+  }
+
+  const analysisProgress = frames.length > 0 ? (qaOverview.analyzedFrames / qaOverview.totalFrames) * 100 : 0
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">QA Dashboard</h2>
+          <p className="text-muted-foreground">
+            Comprehensive quality analysis for Shot {shotId}
+          </p>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setActiveAnalysis('frame')}
+            variant={activeAnalysis === 'frame' ? 'default' : 'outline'}
+            size="sm"
+          >
+            <PlayCircle size={16} className="mr-2" />
+            Frame Analysis
+          </Button>
+          <Button
+            onClick={() => setActiveAnalysis('llava')}
+            variant={activeAnalysis === 'llava' ? 'default' : 'outline'}
+            size="sm"
+          >
+            <Brain size={16} className="mr-2" />
+            LLaVA Vision
+          </Button>
+          <Button
+            onClick={() => setActiveAnalysis('signal')}
+            variant={activeAnalysis === 'signal' ? 'default' : 'outline'}
+            size="sm"
+          >
+            <BarChart3 size={16} className="mr-2" />
+            Signal Analysis
+          </Button>
+        </div>
+      </div>
+
+      {/* QA Overview Cards */}
+      <div className="grid grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold">{qaOverview.totalFrames}</div>
+                <p className="text-xs text-muted-foreground">Total Frames</p>
+              </div>
+              <PlayCircle size={24} className="text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold">{qaOverview.analyzedFrames}</div>
+                <p className="text-xs text-muted-foreground">Analyzed</p>
+              </div>
+              <Eye size={24} className="text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-green-600">{qaOverview.passedFrames}</div>
+                <p className="text-xs text-muted-foreground">Passed</p>
+              </div>
+              <CheckCircle size={24} className="text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-red-600">{qaOverview.criticalIssues}</div>
+                <p className="text-xs text-muted-foreground">Critical Issues</p>
+              </div>
+              <AlertTriangle size={24} className="text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className={`text-2xl font-bold ${getScoreColor(qaOverview.overallScore)}`}>
+                  {(qaOverview.overallScore * 100).toFixed(0)}%
+                </div>
+                <p className="text-xs text-muted-foreground">Overall Score</p>
+              </div>
+              <Target size={24} className="text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Analysis Progress */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            Quality Analysis Dashboard
+            <Clock size={20} />
+            Analysis Progress
           </CardTitle>
+          <CardDescription>
+            Quality analysis progress across all frames
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Button 
-              onClick={startQAAnalysis}
-              disabled={isAnalyzing}
-              className="gap-2"
-            >
-              <Eye className="w-4 h-4" />
-              {isAnalyzing ? 'Analyzing...' : 'Start QA Analysis'}
-            </Button>
-            
-            {activeSession && activeSession.status === 'requires_fixes' && (
-              <Button 
-                onClick={triggerCodeRevision}
-                variant="outline"
-                className="gap-2"
-              >
-                <Code className="w-4 h-4" />
-                Trigger Code Revision
-              </Button>
-            )}
+        <CardContent className="space-y-4">
+          <div className="flex justify-between text-sm">
+            <span>Frame Analysis Progress</span>
+            <span>{qaOverview.analyzedFrames}/{qaOverview.totalFrames} frames</span>
           </div>
-
+          <Progress value={analysisProgress} className="w-full" />
+          
           {isAnalyzing && (
-            <div className="mt-4 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Analyzing frames with LLaVA + SSIM...</span>
-                <span>{Math.round(analysisProgress)}%</span>
-              </div>
-              <Progress value={analysisProgress} />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Zap size={16} className="animate-pulse" />
+              <span>Analysis in progress...</span>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {activeSession && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Session Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Status</span>
-                <Badge className={getStatusColor(activeSession.status)}>
-                  {activeSession.status.replace('_', ' ')}
-                </Badge>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-muted-foreground">Passed Frames</div>
-                  <div className="font-medium">
-                    {activeSession.passedFrames}/{activeSession.totalFrames}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Pass Rate</div>
-                  <div className="font-medium">
-                    {Math.round((activeSession.passedFrames / activeSession.totalFrames) * 100)}%
-                  </div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Avg SSIM</div>
-                  <div className="font-medium">{activeSession.avgSSIM.toFixed(3)}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Revisions</div>
-                  <div className="font-medium">{activeSession.codeRevisions}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Analysis Results</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="issues" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="issues">Issues</TabsTrigger>
-                  <TabsTrigger value="frames">Frame Details</TabsTrigger>
-                  <TabsTrigger value="metrics">Metrics</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="issues" className="mt-4">
-                  <ScrollArea className="h-64">
-                    <div className="space-y-2">
-                      {activeSession.results
-                        .filter(r => r.issues.length > 0)
-                        .slice(0, 20) // Show first 20 problematic frames
-                        .map((result) => (
-                          <div key={result.frameNumber} className="border rounded p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium">
-                                Frame {result.frameNumber}
-                              </span>
-                              <div className="flex items-center gap-1">
-                                {result.semanticPassed ? (
-                                  <CheckCircle2 className="w-3 h-3 text-green-600" />
-                                ) : (
-                                  <XCircle className="w-3 h-3 text-red-600" />
-                                )}
-                                <span className="text-xs text-muted-foreground">
-                                  SSIM: {result.ssimScore.toFixed(2)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="space-y-1 text-xs">
-                              {result.issues.map((issue, idx) => (
-                                <div key={idx} className="text-red-600">• {issue}</div>
-                              ))}
-                              {result.suggestions.map((suggestion, idx) => (
-                                <div key={idx} className="text-blue-600">→ {suggestion}</div>
-                              ))}
-                            </div>
-                          </div>
-                        ))
-                      }
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-
-                <TabsContent value="frames" className="mt-4">
-                  <ScrollArea className="h-64">
-                    <div className="grid grid-cols-8 gap-2">
-                      {activeSession.results.map((result) => (
-                        <div
-                          key={result.frameNumber}
-                          className={`
-                            aspect-square border rounded p-1 text-xs text-center
-                            ${result.ssimScore > 0.8 && result.semanticPassed && result.opticalFlowValid
-                              ? 'bg-green-100 border-green-300'
-                              : 'bg-red-100 border-red-300'
-                            }
-                          `}
-                        >
-                          <ImageIcon className="w-3 h-3 mx-auto mb-1" />
-                          <div>{result.frameNumber}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-
-                <TabsContent value="metrics" className="mt-4">
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <div className="text-sm font-medium flex items-center gap-2">
-                          <TrendUp className="w-4 h-4" />
-                          SSIM Distribution
-                        </div>
-                        <div className="space-y-1 text-xs">
-                          <div className="flex justify-between">
-                            <span>Excellent (≥0.95)</span>
-                            <span>{activeSession.results.filter(r => r.ssimScore >= 0.95).length}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Good (0.85-0.95)</span>
-                            <span>{activeSession.results.filter(r => r.ssimScore >= 0.85 && r.ssimScore < 0.95).length}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Fair (0.75-0.85)</span>
-                            <span>{activeSession.results.filter(r => r.ssimScore >= 0.75 && r.ssimScore < 0.85).length}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Poor (&lt;0.75)</span>
-                            <span>{activeSession.results.filter(r => r.ssimScore < 0.75).length}</span>
-                          </div>
-                        </div>
+      {/* Recent Issues Summary */}
+      {frames.some(f => f.issues && f.issues.length > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle size={20} className="text-yellow-500" />
+              Recent Issues Summary
+            </CardTitle>
+            <CardDescription>
+              Latest issues detected across all analysis types
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {frames
+                .filter(f => f.issues && f.issues.length > 0)
+                .slice(0, 5)
+                .map(frame => (
+                  <div key={frame.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-medium">Frame {frame.frameNumber + 1}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {frame.issues?.length} issue(s)
+                        </Badge>
                       </div>
                       
-                      <div className="space-y-2">
-                        <div className="text-sm font-medium">Check Results</div>
-                        <div className="space-y-1 text-xs">
-                          <div className="flex justify-between">
-                            <span>Semantic Passed</span>
-                            <span>{activeSession.results.filter(r => r.semanticPassed).length}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Optical Flow Valid</span>
-                            <span>{activeSession.results.filter(r => r.opticalFlowValid).length}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>All Checks Passed</span>
-                            <span>{activeSession.passedFrames}</span>
-                          </div>
-                        </div>
+                      <div className="flex gap-1">
+                        {frame.issues?.slice(0, 3).map(issue => (
+                          <Badge 
+                            key={issue.id}
+                            variant={issue.severity === 'critical' ? 'destructive' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {issue.type.replace('_', ' ')}
+                          </Badge>
+                        ))}
+                        {(frame.issues?.length || 0) > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{(frame.issues?.length || 0) - 3} more
+                          </Badge>
+                        )}
                       </div>
                     </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(frame.qaScore || 0, frame.issues?.length || 0)}
+                      <Button
+                        onClick={() => setCurrentFrame(frame.frameNumber)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        View
+                      </Button>
+                    </div>
                   </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Analysis Tabs */}
+      <Tabs value={activeAnalysis} onValueChange={(value) => setActiveAnalysis(value as any)}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="frame" className="flex items-center gap-2">
+            <PlayCircle size={16} />
+            Frame Analysis
+          </TabsTrigger>
+          <TabsTrigger value="llava" className="flex items-center gap-2">
+            <Brain size={16} />
+            LLaVA Vision
+          </TabsTrigger>
+          <TabsTrigger value="signal" className="flex items-center gap-2">
+            <BarChart3 size={16} />
+            Signal Analysis
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="frame" className="mt-6">
+          <FrameQAAnalysis 
+            shotId={shotId}
+            onAnalysisComplete={(result) => {
+              console.log('Frame analysis completed:', result)
+              updateQAOverview()
+            }}
+          />
+        </TabsContent>
+
+        <TabsContent value="llava" className="mt-6">
+          <LLaVAAnalysis
+            frames={frames}
+            currentFrame={currentFrame}
+            onAnalysisComplete={handleLLaVAAnalysis}
+          />
+        </TabsContent>
+
+        <TabsContent value="signal" className="mt-6">
+          <SignalAnalysis
+            frames={frames}
+            currentFrame={currentFrame}
+            onAnalysisComplete={handleSignalAnalysis}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Analysis History Summary */}
+      {analysisResults.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Analysis History</CardTitle>
+            <CardDescription>
+              Historical QA analysis results for this shot
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {analysisResults.slice(0, 3).map(result => (
+                <div key={result.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline">
+                        {result.analysisType}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(result.completedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="text-sm">
+                      Score: {(result.overallScore * 100).toFixed(1)}% • 
+                      Issues: {result.issues.length} • 
+                      Passed: {result.passedFrames}/{result.frameCount}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(result.overallScore, result.issues.length)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

@@ -85,24 +85,54 @@ export interface SignalAnalysis {
 }
 
 export interface QAResult {
-  frameIndex: number
-  timestamp: number
+  id: string
+  shotId: string
   overallScore: number
-  llavaResponse: string
+  frameCount: number
+  passedFrames: number
   issues: FrameIssue[]
-  passed: boolean
-  confidence: number
-  analysisTime: number
+  analysisType: 'vision_llm' | 'signal_analysis' | 'hybrid'
+  completedAt: string
+  processingTime: number
+}
+
+export interface RenderFrame {
+  id: string
+  shotId: string
+  frameNumber: number
+  timestamp: number
+  imagePath: string
+  thumbnail: string
+  status: 'rendering' | 'completed' | 'failed'
+  qaScore?: number
+  issues?: FrameIssue[]
+  metadata: {
+    renderTime: number
+    resolution: { width: number; height: number }
+    renderer: string
+    settings: {
+      samples: number
+      denoiser: string
+      colorSpace: string
+    }
+  }
 }
 
 export interface FrameIssue {
   id: string
+  frameId: string
   type: 'physics_accuracy' | 'visual_clarity' | 'timing' | 'continuity' | 'math_notation' | 'analysis_error'
   severity: 'low' | 'medium' | 'high' | 'critical'
   description: string
   suggestion: string
+  region?: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }
   confidence: number
-  frameNumber: number
+  detectedAt: string
 }
 
 export interface RenderEngine {
