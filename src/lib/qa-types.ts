@@ -1,20 +1,26 @@
-export interface QAAnalysis {
-  frameNumber: number
+export interface QAMetrics {
+  ssim: number
+  opticalFlowStability: number
+  textLegibility: number
+  colorAccuracy: number
   timestamp: number
-  ssimScore: number
-  motionContinuity: number
-  ocrReadability: number
-  issues: QAIssue[]
-  thumbnailUrl?: string
 }
 
-export interface QAIssue {
-  id: string
-  type: 'motion_jitter' | 'low_contrast' | 'label_clipped' | 'timing_drift' | 'blur' | 'artifacts'
+export interface FrameAnalysis {
+  frameIndex: number
+  timestamp: number
+  issues: AnalysisIssue[]
+  metrics: QAMetrics
+  thumbnailUrl?: string
+  status: 'analyzing' | 'complete' | 'error'
+}
+
+export interface AnalysisIssue {
+  type: 'text-legibility' | 'motion-artifact' | 'color-issue' | 'composition' | 'technical'
   severity: 'low' | 'medium' | 'high' | 'critical'
   description: string
-  suggestion: string
-  bbox?: {
+  suggestion?: string
+  location?: {
     x: number
     y: number
     width: number
@@ -24,43 +30,48 @@ export interface QAIssue {
 
 export interface RenderSequence {
   id: string
-  projectId: string
-  shotId: string
   name: string
   frameCount: number
-  fps: number
+  framerate: number
+  duration: number
   resolution: {
     width: number
     height: number
   }
-  status: 'uploading' | 'analyzing' | 'completed' | 'failed'
-  progress: number
-  createdAt: string
-  updatedAt: string
-  analyses: QAAnalysis[]
-  overallScore: number
-  issueCount: {
-    low: number
-    medium: number
-    high: number
-    critical: number
-  }
+  frames: string[] // Array of frame URLs/paths
+  uploadedAt: Date
+  status: 'uploaded' | 'analyzing' | 'complete' | 'error'
 }
 
-export interface QAMetrics {
-  averageSSIM: number
-  motionStability: number
-  textReadability: number
-  overallQuality: number
-  frameAnalysisCount: number
-  totalIssues: number
-}
-
-export interface QASettings {
+export interface QAAnalysisConfig {
+  enableSSIM: boolean
+  enableOpticalFlow: boolean
+  enableOCR: boolean
+  enableLLMCritique: boolean
   ssimThreshold: number
-  motionThreshold: number
-  ocrThreshold: number
-  analysisInterval: number // Analyze every Nth frame
-  autoSuggestions: boolean
-  enablePreview: boolean
+  flowStabilityThreshold: number
+  textLegibilityThreshold: number
+  batchSize: number
+}
+
+export interface OverallQAMetrics {
+  averageSSIM: number
+  motionStabilityScore: number
+  textLegibilityScore: number
+  overallQualityScore: number
+  totalFramesAnalyzed: number
+  issuesDetected: number
+  criticalIssues: number
+  lastAnalysisTime: Date
+}
+
+export interface FrameComparisonResult {
+  frameA: number
+  frameB: number
+  ssimScore: number
+  differences: Array<{
+    type: 'added' | 'removed' | 'changed'
+    region: { x: number; y: number; width: number; height: number }
+    description: string
+  }>
 }

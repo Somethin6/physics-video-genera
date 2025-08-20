@@ -1,325 +1,330 @@
-import { useState, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { Slider } from '@/components/ui/slider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Upload,
-  AlertTriangle,
-  CheckCircle,
-  Eye,
-  Activity
-} from '@phosphor-icons/react'
-import { RenderSequence, QAAnalysis, QAIssue } from '@/lib/qa-types'
-import { FrameAnalysis } from '@/lib/types'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Play, Pause, Upload, Eye, AlertTriangle, CheckCircle, XCircle } from '@phosphor-icons/react'
+import { RenderSequence, FrameAnalysis } from '@/lib/qa-types'
 
 interface RenderPreviewProps {
   sequence?: RenderSequence
   onUploadSequence: (files: FileList) => void
-  onAnalyzeFrame: (frameNumber: number) => Promise<FrameAnalysis>
+  onAnalyzeFrame: (frameIndex: number) => Promise<FrameAnalysis>
 }
 
-export default function RenderPreview({ 
-  sequence, 
-  onUploadSequence, 
-  onAnalyzeFrame 
-}: RenderPreviewProps) {
+export default function RenderPreview({ sequence, onUploadSequence, onAnalyzeFrame }: RenderPreviewProps) {
   const [currentFrame, setCurrentFrame] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [selectedAnalysis, setSelectedAnalysis] = useState<QAAnalysis | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [analysisResults, setAnalysisResults] = useState<Map<number, FrameAnalysis>>(new Map())
+  const [analyzingFrames, setAnalyzingFrames] = useState<Set<number>>(new Set())
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      onUploadSequence(event.target.files)
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files && files.length > 0) {
+      onUploadSequence(files)
     }
-  }
+  }, [onUploadSequence])
 
-  const togglePlayback = () => {
-    setIsPlaying(!isPlaying)
-    // Implementation would handle actual playback
-  }
+  const handleFrameAnalysis = useCallback(async (frameIndex: number) => {
+    if (analyzingFrames.has(frameIndex) || analysisResults.has(frameIndex)) return
 
-  const getSeverityColor = (severity: QAIssue['severity']) => {
-    switch (severity) {
-      case 'critical': return 'destructive'
-      case 'high': return 'destructive'
-      case 'medium': return 'accent'
-      case 'low': return 'secondary'
-      default: return 'secondary'
+    setAnalyzingFrames(prev => new Set(prev).add(frameIndex))
+    
+    try {
+      const analysis = await onAnalyzeFrame(frameIndex)
+      setAnalysisResults(prev => new Map(prev).set(frameIndex, analysis))
+    } catch (error) {
+      console.error('Frame analysis failed:', error)
+    } finally {
+      setAnalyzingFrames(prev => {
+        const next = new Set(prev)
+        next.delete(frameIndex)
+        return next
+      })
     }
+  }, [analyzingFrames, analysisResults, onAnalyzeFrame])
+
+  const formatTimestamp = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    const frames = Math.floor((seconds % 1) * (sequence?.framerate || 30))
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${frames.toString().padStart(2, '0')}`
   }
 
-  const getSeverityIcon = (severity: QAIssue['severity']) => {
+  const getIssueSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical':
-      case 'high':
-        return <AlertTriangle size={16} />
-      case 'medium':
-        return <Eye size={16} />
-      case 'low':
-        return <Activity size={16} />
-      default:
-        return <CheckCircle size={16} />
+      case 'critical': return 'bg-destructive text-destructive-foreground'
+      case 'high': return 'bg-orange-500 text-white'
+      case 'medium': return 'bg-accent text-accent-foreground'
+      case 'low': return 'bg-muted text-muted-foreground'
+      default: return 'bg-muted text-muted-foreground'
     }
   }
 
   if (!sequence) {
     return (
-      <Card className="h-full">
-        <CardContent className="flex flex-col items-center justify-center h-full space-y-4 p-8">
-          <div className="text-center space-y-2">
-            <Upload size={48} className="mx-auto text-muted-foreground" />
-            <h3 className="text-lg font-semibold">Upload Render Sequence</h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Upload your rendered frame sequence to begin automated quality analysis
-            </p>
-          </div>
-          
-          <Button 
-            onClick={() => fileInputRef.current?.click()}
-            className="gap-2"
-          >
-            <Upload size={16} />
-            Choose Files
-          </Button>
-          
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            multiple
-            accept="image/*"
-            className="hidden"
-          />
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload size={20} />
+              Upload Render Sequence
+            </CardTitle>
+            <CardDescription>
+              Upload a sequence of rendered frames for quality analysis
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+              <Upload size={48} className="mx-auto text-muted-foreground mb-4" />
+              <p className="text-lg font-medium mb-2">Drop frame sequences here</p>
+              <p className="text-muted-foreground mb-4">
+                Supports PNG, EXR, and JPEG frame sequences
+              </p>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="frame-upload"
+              />
+              <Button asChild>
+                <label htmlFor="frame-upload" className="cursor-pointer">
+                  Browse Files
+                </label>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
+  const currentAnalysis = analysisResults.get(currentFrame)
+  const isAnalyzing = analyzingFrames.has(currentFrame)
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-      {/* Main Preview Panel */}
-      <div className="lg:col-span-2 space-y-4">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{sequence.name}</CardTitle>
-              <Badge variant={sequence.status === 'completed' ? 'default' : 'secondary'}>
-                {sequence.status}
-              </Badge>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="space-y-4">
-            {/* Frame Display Area */}
-            <div className="bg-black rounded-lg aspect-video flex items-center justify-center">
-              <div className="text-white text-sm">
-                Frame {currentFrame + 1} / {sequence.frameCount}
-              </div>
-              {/* Actual frame would be displayed here */}
-            </div>
+    <div className="space-y-6">
+      {/* Sequence Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>{sequence.name}</span>
+            <Badge variant="outline">
+              {sequence.frameCount} frames • {formatTimestamp(sequence.duration)}
+            </Badge>
+          </CardTitle>
+          <CardDescription>
+            {sequence.resolution.width}×{sequence.resolution.height} • {sequence.framerate}fps
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      {/* Video Player */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="aspect-video bg-black rounded-lg mb-4 relative overflow-hidden">
+            {sequence.frames[currentFrame] && (
+              <img
+                src={sequence.frames[currentFrame]}
+                alt={`Frame ${currentFrame + 1}`}
+                className="w-full h-full object-contain"
+              />
+            )}
             
-            {/* Playback Controls */}
+            {/* Analysis Overlay */}
+            {currentAnalysis?.issues.map((issue, index) => 
+              issue.location && (
+                <div
+                  key={index}
+                  className="absolute border-2 border-red-500 bg-red-500/20"
+                  style={{
+                    left: `${(issue.location.x / sequence.resolution.width) * 100}%`,
+                    top: `${(issue.location.y / sequence.resolution.height) * 100}%`,
+                    width: `${(issue.location.width / sequence.resolution.width) * 100}%`,
+                    height: `${(issue.location.height / sequence.resolution.height) * 100}%`,
+                  }}
+                  title={issue.description}
+                />
+              )
+            )}
+          </div>
+
+          {/* Timeline Controls */}
+          <div className="space-y-4">
             <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm">
-                <SkipBack size={16} />
-              </Button>
-              
-              <Button onClick={togglePlayback} variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPlaying(!isPlaying)}
+              >
                 {isPlaying ? <Pause size={16} /> : <Play size={16} />}
               </Button>
               
-              <Button variant="outline" size="sm">
-                <SkipForward size={16} />
-              </Button>
-              
               <div className="flex-1">
-                <Slider
-                  value={[currentFrame]}
-                  onValueChange={(value) => setCurrentFrame(value[0])}
-                  max={sequence.frameCount - 1}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
-              
-              <span className="text-sm text-muted-foreground min-w-0">
-                {Math.floor(currentFrame / sequence.fps)}s
-              </span>
-            </div>
-            
-            {/* Analysis Progress */}
-            {sequence.status === 'analyzing' && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Analyzing frames...</span>
-                  <span>{sequence.progress}%</span>
+                <div className="relative">
+                  <input
+                    type="range"
+                    min={0}
+                    max={sequence.frameCount - 1}
+                    value={currentFrame}
+                    onChange={(e) => setCurrentFrame(parseInt(e.target.value))}
+                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="absolute top-0 left-0 w-full h-2 bg-primary/20 rounded-lg pointer-events-none">
+                    <div
+                      className="h-full bg-primary rounded-lg"
+                      style={{ width: `${((currentFrame + 1) / sequence.frameCount) * 100}%` }}
+                    />
+                  </div>
                 </div>
-                <Progress value={sequence.progress} />
               </div>
+
+              <div className="text-sm font-mono text-muted-foreground min-w-[120px] text-right">
+                {formatTimestamp(currentFrame / sequence.framerate)} / {formatTimestamp(sequence.duration)}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <span>Frame {currentFrame + 1} of {sequence.frameCount}</span>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleFrameAnalysis(currentFrame)}
+                disabled={isAnalyzing || currentAnalysis !== undefined}
+              >
+                {isAnalyzing ? (
+                  <>Analyzing...</>
+                ) : currentAnalysis ? (
+                  <>
+                    <CheckCircle size={16} className="mr-2" />
+                    Analyzed
+                  </>
+                ) : (
+                  <>
+                    <Eye size={16} className="mr-2" />
+                    Analyze Frame
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Analysis Results */}
+      {(currentAnalysis || isAnalyzing) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye size={20} />
+              Frame Analysis Results
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isAnalyzing ? (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4" />
+                <p className="text-muted-foreground">Analyzing frame {currentFrame + 1}...</p>
+              </div>
+            ) : currentAnalysis && (
+              <Tabs defaultValue="metrics" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="metrics">Quality Metrics</TabsTrigger>
+                  <TabsTrigger value="issues">Issues Found</TabsTrigger>
+                  <TabsTrigger value="comparison">Comparison</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="metrics" className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">SSIM Score</label>
+                      <div className="flex items-center gap-2">
+                        <Progress value={currentAnalysis.metrics.ssim * 100} className="flex-1" />
+                        <span className="text-sm font-mono">{currentAnalysis.metrics.ssim.toFixed(3)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Motion Stability</label>
+                      <div className="flex items-center gap-2">
+                        <Progress value={currentAnalysis.metrics.opticalFlowStability * 100} className="flex-1" />
+                        <span className="text-sm font-mono">{currentAnalysis.metrics.opticalFlowStability.toFixed(3)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Text Legibility</label>
+                      <div className="flex items-center gap-2">
+                        <Progress value={currentAnalysis.metrics.textLegibility * 100} className="flex-1" />
+                        <span className="text-sm font-mono">{currentAnalysis.metrics.textLegibility.toFixed(3)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Color Accuracy</label>
+                      <div className="flex items-center gap-2">
+                        <Progress value={currentAnalysis.metrics.colorAccuracy * 100} className="flex-1" />
+                        <span className="text-sm font-mono">{currentAnalysis.metrics.colorAccuracy.toFixed(3)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="issues" className="space-y-4">
+                  {currentAnalysis.issues.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
+                      <p>No issues detected in this frame</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Severity</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Suggestion</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentAnalysis.issues.map((issue, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium capitalize">
+                              {issue.type.replace('-', ' ')}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getIssueSeverityColor(issue.severity)}>
+                                {issue.severity}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{issue.description}</TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {issue.suggestion || '—'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="comparison" className="space-y-4">
+                  <div className="text-center py-8 text-muted-foreground">
+                    <XCircle size={48} className="mx-auto mb-4" />
+                    <p>Frame comparison analysis not available</p>
+                    <p className="text-sm">Select multiple frames to enable comparison</p>
+                  </div>
+                </TabsContent>
+              </Tabs>
             )}
           </CardContent>
         </Card>
-        
-        {/* Frame Analysis Details */}
-        {selectedAnalysis && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Frame Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="metrics" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="metrics">Metrics</TabsTrigger>
-                  <TabsTrigger value="issues">Issues</TabsTrigger>
-                  <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="metrics" className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-mono font-semibold">
-                        {(selectedAnalysis.ssimScore * 100).toFixed(1)}%
-                      </div>
-                      <div className="text-xs text-muted-foreground">SSIM Score</div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-2xl font-mono font-semibold">
-                        {(selectedAnalysis.motionContinuity * 100).toFixed(1)}%
-                      </div>
-                      <div className="text-xs text-muted-foreground">Motion Continuity</div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-2xl font-mono font-semibold">
-                        {(selectedAnalysis.ocrReadability * 100).toFixed(1)}%
-                      </div>
-                      <div className="text-xs text-muted-foreground">Text Readability</div>
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="issues" className="space-y-2">
-                  {selectedAnalysis.issues.length === 0 ? (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No issues detected in this frame
-                    </div>
-                  ) : (
-                    selectedAnalysis.issues.map((issue) => (
-                      <div key={issue.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                        <div className={`text-${getSeverityColor(issue.severity)}`}>
-                          {getSeverityIcon(issue.severity)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{issue.description}</div>
-                          <Badge variant={getSeverityColor(issue.severity)} className="mt-1">
-                            {issue.severity}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="suggestions" className="space-y-2">
-                  {selectedAnalysis.issues
-                    .filter(issue => issue.suggestion)
-                    .map((issue) => (
-                      <div key={issue.id} className="p-3 border rounded-lg">
-                        <div className="font-medium text-sm mb-1">{issue.type.replace('_', ' ')}</div>
-                        <div className="text-sm text-muted-foreground">{issue.suggestion}</div>
-                      </div>
-                    ))}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-      
-      {/* Analysis Panel */}
-      <div className="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Quality Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold">{sequence.overallScore}%</div>
-              <div className="text-sm text-muted-foreground">Overall Quality</div>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Critical Issues</span>
-                <Badge variant="destructive">{sequence.issueCount.critical}</Badge>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">High Priority</span>
-                <Badge variant="destructive">{sequence.issueCount.high}</Badge>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Medium Priority</span>
-                <Badge variant="secondary">{sequence.issueCount.medium}</Badge>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Low Priority</span>
-                <Badge variant="outline">{sequence.issueCount.low}</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Frame List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Analyzed Frames</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {sequence.analyses.map((analysis) => (
-                <button
-                  key={analysis.frameNumber}
-                  onClick={() => {
-                    setCurrentFrame(analysis.frameNumber)
-                    setSelectedAnalysis(analysis)
-                  }}
-                  className={`w-full text-left p-2 rounded border transition-colors hover:bg-muted ${
-                    selectedAnalysis?.frameNumber === analysis.frameNumber 
-                      ? 'bg-accent text-accent-foreground' 
-                      : ''
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">
-                      Frame {analysis.frameNumber + 1}
-                    </span>
-                    {analysis.issues.length > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        {analysis.issues.length}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {analysis.timestamp.toFixed(2)}s
-                  </div>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      )}
     </div>
   )
 }

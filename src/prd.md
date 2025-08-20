@@ -1,59 +1,100 @@
-# Physics Video Pipeline - QA Analysis System
+# Physics Video Pipeline - Render Preview & QA System
 
 ## Core Purpose & Success
-- **Mission Statement**: Create a production-grade render preview system with automated frame-by-frame quality analysis for physics video content.
-- **Success Indicators**: Accurate detection of visual issues, reliable quality metrics, seamless integration with existing pipeline.
-- **Experience Qualities**: Professional, reliable, insightful.
+
+**Mission Statement**: Create a frame-by-frame quality analysis system that allows real-time preview and automated QA of physics video renders using local AI models for visual inspection and metric validation.
+
+**Success Indicators**: 
+- Frame-level analysis with visual feedback
+- Automated quality metrics (SSIM, optical flow, OCR validation)
+- Real-time preview with scrubbing capability
+- LLM-driven critique and fix suggestions
+
+**Experience Qualities**: Professional, Technical, Responsive
 
 ## Project Classification & Approach
-- **Complexity Level**: Complex Application (advanced functionality with real-time analysis)
-- **Primary User Activity**: Analyzing and acting on render quality data
+
+**Complexity Level**: Complex Application (advanced QA analysis, frame processing, AI integration)
+**Primary User Activity**: Interacting with rendered sequences for quality validation
 
 ## Core Problem Analysis
-- **Problem**: Manual QA of physics video renders is time-intensive and error-prone
-- **User Context**: Video producers need automated quality validation before final rendering
-- **Critical Path**: Upload → Analysis → Issue Detection → Actionable Feedback
-- **Key Moments**: Frame analysis completion, issue identification, corrective action suggestions
+
+This system addresses the critical gap between automated rendering and quality assurance in AI-driven video production. Traditional pipelines lack frame-level inspection capabilities with intelligent analysis.
+
+**User Context**: Video producers need to validate render quality at the frame level, catch visual artifacts, ensure text legibility, and verify motion continuity before final assembly.
+
+**Critical Path**: Upload sequence → Frame extraction → Analysis → Review → Fix iteration
 
 ## Essential Features
-1. **Frame Upload & Processing**: Batch upload of render sequences with progress tracking
-2. **Automated QA Analysis**: SSIM comparison, optical flow analysis, OCR validation
-3. **Visual Issue Detection**: Motion jitter, label legibility, contrast problems
-4. **Interactive Preview**: Frame-by-frame navigation with issue highlighting
-5. **Corrective Suggestions**: AI-generated recommendations for detected issues
+
+### Frame-by-Frame Preview
+- **Functionality**: Interactive timeline scrubbing with frame navigation
+- **Purpose**: Allow precise inspection of any frame in the sequence
+- **Success Criteria**: Smooth playback and responsive frame seeking
+
+### Visual QA Analysis
+- **Functionality**: Automated analysis using computer vision metrics
+- **Purpose**: Detect visual artifacts, text legibility issues, motion problems
+- **Success Criteria**: Accurate detection of common rendering issues
+
+### AI-Driven Critique
+- **Functionality**: LLM analysis of frames with contextual feedback
+- **Purpose**: Provide actionable suggestions for render improvements
+- **Success Criteria**: Relevant, implementable feedback for detected issues
 
 ## Design Direction
 
 ### Visual Tone & Identity
-- **Emotional Response**: Confidence in quality control, clarity of analysis results
-- **Design Personality**: Technical precision with clean, dashboard-like interface
-- **Visual Metaphors**: Video timeline, quality metrics, diagnostic tools
-- **Simplicity Spectrum**: Rich interface with clear information hierarchy
+**Emotional Response**: Professional confidence with technical precision
+**Design Personality**: Clean, analytical, focused on data visualization
+**Visual Metaphors**: Laboratory analysis, precision instruments, technical inspection
 
 ### Color Strategy
-- **Color Scheme Type**: Triadic (three equally spaced colors)
-- **Primary Color**: Deep blue-grey (#1e293b) - technical precision
-- **Secondary Colors**: Warm orange (#f59e0b) for warnings, green (#10b981) for success
-- **Accent Color**: Bright cyan (#06b6d4) for interactive elements and highlights
-- **Color Psychology**: Blue conveys trust and technical competence, orange draws attention to issues
-- **Foreground/Background Pairings**: 
-  - Background (#f8fafc) with foreground (#1e293b) - 16.1:1 contrast
-  - Card (#1e293b) with card-foreground (#f8fafc) - 16.1:1 contrast
-  - Primary (#1e293b) with primary-foreground (#f8fafc) - 16.1:1 contrast
+**Color Scheme Type**: Monochromatic with technical accent colors
+**Primary Color**: Deep blue-gray (technical precision)
+**Secondary Colors**: Subtle grays for backgrounds and borders
+**Accent Color**: Amber/orange for warnings and critical analysis points
+**Color Psychology**: Blues convey reliability and precision, amber draws attention to important findings
 
 ### Typography System
-- **Font Pairing Strategy**: Inter for UI elements, JetBrains Mono for technical data
-- **Typographic Hierarchy**: Bold headings, medium weights for labels, monospace for metrics
-- **Font Personality**: Clean, readable, technical precision
-- **Which fonts**: Inter (UI), JetBrains Mono (code/data)
-- **Legibility Check**: Both fonts are highly legible at small sizes
+**Font Pairing Strategy**: Technical monospace for code/metrics, clean sans-serif for UI
+**Selected Fonts**: JetBrains Mono for technical data, Inter for interface text
+**Typographic Hierarchy**: Clear distinction between metrics, analysis results, and UI controls
+**Legibility Check**: All fonts tested for readability in technical contexts
 
-### UI Elements & Component Selection
-- **Component Usage**: Cards for frame previews, Progress bars for analysis, Tables for metrics
-- **Interactive Elements**: Slider for frame navigation, buttons for actions, tooltips for details
-- **Icon Selection**: Play/pause for video controls, warning icons for issues, check marks for validation
+### Visual Hierarchy & Layout
+**Attention Direction**: Timeline controls → Frame preview → Analysis panels
+**Grid System**: Technical layout with precise alignment for data visualization
+**Content Density**: Information-rich but organized in logical sections
 
-## Implementation Considerations
-- **Scalability Needs**: Handle large frame sequences efficiently
-- **Performance**: Real-time frame navigation, responsive analysis updates
-- **Integration**: Work with existing project structure and data flow
+### UI Components & Component Selection
+**Component Usage**: 
+- Custom video player with timeline scrubbing
+- Collapsible analysis panels for metrics
+- Data tables for frame-by-frame results
+- Progress indicators for analysis status
+
+**Component Hierarchy**: 
+- Primary: Video player and timeline
+- Secondary: Analysis results and metrics
+- Tertiary: Upload controls and settings
+
+### Accessibility & Readability
+**Contrast Goal**: WCAG AA compliance for all text and data visualization elements
+
+## Technical Implementation
+
+The system integrates with the existing physics video pipeline architecture, adding specialized components for:
+
+- Frame extraction and processing
+- Computer vision analysis (SSIM, optical flow)
+- OCR for text validation
+- LLM integration for contextual critique
+- Real-time preview with performance optimization
+
+## Success Metrics
+
+- Frame analysis accuracy (>95% detection of common issues)
+- Preview performance (smooth playback at various frame rates)
+- User workflow efficiency (reduce QA time by 70%)
+- Fix iteration effectiveness (actionable suggestions in 90% of cases)

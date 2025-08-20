@@ -1,24 +1,23 @@
-import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
+  Play, 
+  Pause, 
   Activity, 
+  TrendUp, 
   AlertTriangle, 
-  CheckCircle, 
+  CheckCircle,
   Eye,
-  TrendingUp,
-  Cpu,
-  HardDrive,
-  Clock
+  BarChart
 } from '@phosphor-icons/react'
-import { QAMetrics } from '@/lib/qa-types'
-import { FrameAnalysis, QAIssue } from '@/lib/types'
+import { OverallQAMetrics, FrameAnalysis } from '@/lib/qa-types'
 
-interface QAAnalysisProps {
-  metrics: QAMetrics
+interface QAAnalysisDashboardProps {
+  metrics: OverallQAMetrics
   recentAnalyses: FrameAnalysis[]
   isAnalyzing: boolean
   onStartAnalysis: () => void
@@ -31,357 +30,375 @@ export default function QAAnalysisDashboard({
   isAnalyzing, 
   onStartAnalysis, 
   onStopAnalysis 
-}: QAAnalysisProps) {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'1h' | '6h' | '24h'>('1h')
-
-  const getMetricColor = (score: number) => {
+}: QAAnalysisDashboardProps) {
+  
+  const getQualityColor = (score: number) => {
     if (score >= 0.9) return 'text-green-600'
-    if (score >= 0.7) return 'text-yellow-600'
+    if (score >= 0.75) return 'text-yellow-600'
     return 'text-red-600'
   }
 
-  const getMetricStatus = (score: number) => {
-    if (score >= 0.9) return 'excellent'
-    if (score >= 0.7) return 'good'
-    if (score >= 0.5) return 'fair'
-    return 'poor'
+  const getQualityLabel = (score: number) => {
+    if (score >= 0.9) return 'Excellent'
+    if (score >= 0.75) return 'Good'
+    if (score >= 0.6) return 'Fair'
+    return 'Poor'
   }
 
-  const criticalIssues = recentAnalyses
-    .flatMap(analysis => analysis.detectedIssues)
-    .filter(issue => issue.severity === 'critical')
+  const formatTimestamp = (timestamp: number) => {
+    return new Date(timestamp).toLocaleTimeString()
+  }
 
-  const highPriorityIssues = recentAnalyses
-    .flatMap(analysis => analysis.detectedIssues)
-    .filter(issue => issue.severity === 'high')
+  const getIssueSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-destructive text-destructive-foreground'
+      case 'high': return 'bg-orange-500 text-white'
+      case 'medium': return 'bg-accent text-accent-foreground'
+      case 'low': return 'bg-muted text-muted-foreground'
+      default: return 'bg-muted text-muted-foreground'
+    }
+  }
 
   return (
     <div className="space-y-6">
-      {/* System Status Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">QA Analysis Dashboard</h2>
-          <p className="text-muted-foreground">
-            Real-time quality monitoring and frame analysis
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Badge variant={isAnalyzing ? 'default' : 'outline'} className="gap-2">
-            <Activity size={12} className={isAnalyzing ? 'animate-pulse' : ''} />
-            {isAnalyzing ? 'Analyzing' : 'Idle'}
-          </Badge>
-          
-          {isAnalyzing ? (
-            <Button variant="outline" onClick={onStopAnalysis}>
-              Stop Analysis
+      {/* Analysis Control */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Activity size={20} />
+              Quality Analysis System
+            </div>
+            
+            <Button
+              onClick={isAnalyzing ? onStopAnalysis : onStartAnalysis}
+              variant={isAnalyzing ? "destructive" : "default"}
+              className="gap-2"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Pause size={16} />
+                  Stop Analysis
+                </>
+              ) : (
+                <>
+                  <Play size={16} />
+                  Start Analysis
+                </>
+              )}
             </Button>
-          ) : (
-            <Button onClick={onStartAnalysis}>
-              Start Analysis
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Key Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Overall Quality</p>
-                <p className={`text-2xl font-bold ${getMetricColor(metrics.overallQuality)}`}>
-                  {(metrics.overallQuality * 100).toFixed(1)}%
-                </p>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {getMetricStatus(metrics.overallQuality)}
-                </p>
-              </div>
-              <TrendingUp className={getMetricColor(metrics.overallQuality)} size={20} />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold">{metrics.totalFramesAnalyzed}</div>
+              <div className="text-sm text-muted-foreground">Frames Analyzed</div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Text Readability</p>
-                <p className={`text-2xl font-bold ${getMetricColor(metrics.textReadability)}`}>
-                  {(metrics.textReadability * 100).toFixed(1)}%
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {metrics.frameAnalysisCount} frames
-                </p>
-              </div>
-              <Eye className={getMetricColor(metrics.textReadability)} size={20} />
+            
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">{metrics.issuesDetected}</div>
+              <div className="text-sm text-muted-foreground">Issues Detected</div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Motion Stability</p>
-                <p className={`text-2xl font-bold ${getMetricColor(metrics.motionStability)}`}>
-                  {(metrics.motionStability * 100).toFixed(1)}%
-                </p>
-                <p className="text-xs text-muted-foreground">Optical flow</p>
-              </div>
-              <Activity className={getMetricColor(metrics.motionStability)} size={20} />
+            
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">{metrics.criticalIssues}</div>
+              <div className="text-sm text-muted-foreground">Critical Issues</div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Issues</p>
-                <p className="text-2xl font-bold">
-                  {metrics.totalIssues}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {criticalIssues.length} critical
-                </p>
+            
+            <div className="text-center">
+              <div className={`text-2xl font-bold ${getQualityColor(metrics.overallQualityScore)}`}>
+                {getQualityLabel(metrics.overallQualityScore)}
               </div>
-              <AlertTriangle className="text-red-600" size={20} />
+              <div className="text-sm text-muted-foreground">Overall Quality</div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Detailed Analysis */}
-      <Tabs defaultValue="metrics" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="metrics">Detailed Metrics</TabsTrigger>
-          <TabsTrigger value="issues">Active Issues</TabsTrigger>
-          <TabsTrigger value="frames">Recent Analyses</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="metrics" className="space-y-4">
+      {/* Quality Metrics Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart size={20} />
+            Quality Metrics Overview
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Quality Breakdown</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>SSIM Score</span>
-                      <span>{(metrics.averageSSIM * 100).toFixed(1)}%</span>
-                    </div>
-                    <Progress value={metrics.averageSSIM * 100} />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Motion Stability</span>
-                      <span>{(metrics.motionStability * 100).toFixed(1)}%</span>
-                    </div>
-                    <Progress value={metrics.motionStability * 100} />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Text Readability</span>
-                      <span>{(metrics.textReadability * 100).toFixed(1)}%</span>
-                    </div>
-                    <Progress value={metrics.textReadability * 100} />
-                  </div>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium">Average SSIM Score</label>
+                  <span className="text-sm font-mono">{metrics.averageSSIM.toFixed(3)}</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Analysis Statistics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <div className="text-2xl font-mono font-bold">{metrics.frameAnalysisCount}</div>
-                    <div className="text-xs text-muted-foreground">Frames Analyzed</div>
-                  </div>
-
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <div className="text-2xl font-mono font-bold">{metrics.totalIssues}</div>
-                    <div className="text-xs text-muted-foreground">Issues Found</div>
-                  </div>
-
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <div className="text-2xl font-mono font-bold">
-                      {recentAnalyses.length > 0 ? 
-                        (recentAnalyses.reduce((sum, a) => sum + a.detectedIssues.length, 0) / recentAnalyses.length).toFixed(1) : 
-                        '0'
-                      }
-                    </div>
-                    <div className="text-xs text-muted-foreground">Avg Issues/Frame</div>
-                  </div>
-
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <div className="text-2xl font-mono font-bold">
-                      {(metrics.overallQuality * 100).toFixed(1)}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">Quality Score</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="issues" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Critical Issues */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="text-red-600" size={16} />
-                  Critical Issues ({criticalIssues.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {criticalIssues.length === 0 ? (
-                  <div className="text-center py-4 text-muted-foreground">
-                    No critical issues detected
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {criticalIssues.slice(0, 5).map((issue, index) => (
-                      <div key={`critical-${index}`} className="flex items-start gap-3 p-3 border rounded-lg">
-                        <AlertTriangle className="text-red-600 mt-0.5" size={16} />
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{issue.description}</div>
-                          <div className="text-xs text-muted-foreground">
-                            Frame {issue.frameNumber} • {(issue.timestamp / 1000).toFixed(1)}s
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* High Priority Issues */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="text-orange-600" size={16} />
-                  High Priority ({highPriorityIssues.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {highPriorityIssues.length === 0 ? (
-                  <div className="text-center py-4 text-muted-foreground">
-                    No high priority issues
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {highPriorityIssues.slice(0, 5).map((issue, index) => (
-                      <div key={`high-${index}`} className="flex items-start gap-3 p-3 border rounded-lg">
-                        <AlertTriangle className="text-orange-600 mt-0.5" size={16} />
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{issue.description}</div>
-                          <div className="text-xs text-muted-foreground">
-                            Frame {issue.frameNumber} • {(issue.timestamp / 1000).toFixed(1)}s
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="frames" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Recent Frame Analyses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {recentAnalyses.slice(0, 10).map((analysis) => (
-                  <div key={analysis.frameNumber} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="font-mono text-sm">
-                        Frame {analysis.frameNumber.toString().padStart(4, '0')}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {(analysis.timestamp / 1000).toFixed(2)}s
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <div className="text-sm font-medium">
-                        {(analysis.visualQuality * 100).toFixed(1)}%
-                      </div>
-                      
-                      {analysis.detectedIssues.length > 0 ? (
-                        <Badge variant="outline">
-                          {analysis.detectedIssues.length} issues
-                        </Badge>
-                      ) : (
-                        <CheckCircle className="text-green-600" size={16} />
-                      )}
-                    </div>
-                  </div>
-                ))}
+                <Progress value={metrics.averageSSIM * 100} />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="performance" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">CPU Usage</p>
-                    <p className="text-2xl font-bold">45%</p>
-                    <p className="text-xs text-muted-foreground">8 cores active</p>
-                  </div>
-                  <Cpu className="text-blue-600" size={20} />
+              
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium">Motion Stability</label>
+                  <span className="text-sm font-mono">{metrics.motionStabilityScore.toFixed(3)}</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Memory Usage</p>
-                    <p className="text-2xl font-bold">12.4GB</p>
-                    <p className="text-xs text-muted-foreground">38% of 32GB</p>
-                  </div>
-                  <HardDrive className="text-green-600" size={20} />
+                <Progress value={metrics.motionStabilityScore * 100} />
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium">Text Legibility</label>
+                  <span className="text-sm font-mono">{metrics.textLegibilityScore.toFixed(3)}</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Analysis Rate</p>
-                    <p className="text-2xl font-bold">2.3</p>
-                    <p className="text-xs text-muted-foreground">frames/second</p>
-                  </div>
-                  <Clock className="text-purple-600" size={20} />
+                <Progress value={metrics.textLegibilityScore * 100} />
+              </div>
+              
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium">Overall Quality</label>
+                  <span className="text-sm font-mono">{metrics.overallQualityScore.toFixed(3)}</span>
                 </div>
-              </CardContent>
-            </Card>
+                <Progress value={metrics.overallQualityScore * 100} />
+              </div>
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
+          
+          <div className="mt-6 text-sm text-muted-foreground">
+            Last analysis: {metrics.lastAnalysisTime.toLocaleString()}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Analysis Results */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendUp size={20} />
+            Recent Frame Analyses
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="all">All Frames</TabsTrigger>
+              <TabsTrigger value="issues">With Issues</TabsTrigger>
+              <TabsTrigger value="critical">Critical Only</TabsTrigger>
+              <TabsTrigger value="metrics">Top Metrics</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all" className="space-y-4">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Frame</TableHead>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>SSIM</TableHead>
+                      <TableHead>Motion</TableHead>
+                      <TableHead>Text</TableHead>
+                      <TableHead>Issues</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentAnalyses.slice(0, 10).map((analysis) => (
+                      <TableRow key={analysis.frameIndex}>
+                        <TableCell className="font-mono">
+                          Frame {analysis.frameIndex + 1}
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          {formatTimestamp(analysis.metrics.timestamp)}
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          {analysis.metrics.ssim.toFixed(3)}
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          {analysis.metrics.opticalFlowStability.toFixed(3)}
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          {analysis.metrics.textLegibility.toFixed(3)}
+                        </TableCell>
+                        <TableCell>
+                          {analysis.issues.length === 0 ? (
+                            <Badge variant="outline" className="text-green-600">
+                              <CheckCircle size={12} className="mr-1" />
+                              None
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-orange-600">
+                              <AlertTriangle size={12} className="mr-1" />
+                              {analysis.issues.length}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={analysis.status === 'complete' ? 'default' : 'secondary'}
+                          >
+                            {analysis.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="issues" className="space-y-4">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Frame</TableHead>
+                      <TableHead>Issue Type</TableHead>
+                      <TableHead>Severity</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Suggestion</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentAnalyses
+                      .filter(analysis => analysis.issues.length > 0)
+                      .slice(0, 10)
+                      .flatMap(analysis => 
+                        analysis.issues.map(issue => ({
+                          frameIndex: analysis.frameIndex,
+                          ...issue
+                        }))
+                      )
+                      .map((issue, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-mono">
+                            Frame {issue.frameIndex + 1}
+                          </TableCell>
+                          <TableCell className="capitalize">
+                            {issue.type.replace('-', ' ')}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getIssueSeverityColor(issue.severity)}>
+                              {issue.severity}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{issue.description}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {issue.suggestion || '—'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="critical" className="space-y-4">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Frame</TableHead>
+                      <TableHead>Issue Type</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Suggestion</TableHead>
+                      <TableHead>Action Required</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentAnalyses
+                      .filter(analysis => 
+                        analysis.issues.some(issue => issue.severity === 'critical')
+                      )
+                      .slice(0, 10)
+                      .flatMap(analysis => 
+                        analysis.issues
+                          .filter(issue => issue.severity === 'critical')
+                          .map(issue => ({
+                            frameIndex: analysis.frameIndex,
+                            ...issue
+                          }))
+                      )
+                      .map((issue, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-mono">
+                            Frame {issue.frameIndex + 1}
+                          </TableCell>
+                          <TableCell className="capitalize">
+                            {issue.type.replace('-', ' ')}
+                          </TableCell>
+                          <TableCell>{issue.description}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {issue.suggestion || '—'}
+                          </TableCell>
+                          <TableCell>
+                            <Button size="sm" variant="destructive">
+                              Fix Required
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="metrics" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Highest Quality Frames</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {recentAnalyses
+                        .sort((a, b) => b.metrics.ssim - a.metrics.ssim)
+                        .slice(0, 5)
+                        .map((analysis) => (
+                          <div key={analysis.frameIndex} className="flex items-center justify-between">
+                            <span className="font-mono text-sm">
+                              Frame {analysis.frameIndex + 1}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Progress value={analysis.metrics.ssim * 100} className="w-20" />
+                              <span className="font-mono text-sm">
+                                {analysis.metrics.ssim.toFixed(3)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Frames Needing Attention</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {recentAnalyses
+                        .sort((a, b) => a.metrics.ssim - b.metrics.ssim)
+                        .slice(0, 5)
+                        .map((analysis) => (
+                          <div key={analysis.frameIndex} className="flex items-center justify-between">
+                            <span className="font-mono text-sm">
+                              Frame {analysis.frameIndex + 1}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Progress value={analysis.metrics.ssim * 100} className="w-20" />
+                              <span className="font-mono text-sm">
+                                {analysis.metrics.ssim.toFixed(3)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   )
 }
