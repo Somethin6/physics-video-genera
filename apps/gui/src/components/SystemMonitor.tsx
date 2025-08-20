@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Cpu, HardDrive, Thermometer, Monitor, Lightning, Database, Activity } from 'lucide-react'
+import { Cpu, HardDrive, Thermometer, Monitor, Zap, Database, Activity, RotateCcw } from 'lucide-react'
 import { SystemMetrics } from '@/lib/types'
 
 export default function SystemMonitor() {
@@ -242,7 +242,7 @@ export default function SystemMonitor() {
           <CardTitle className="font-sans flex items-center justify-between">
             System Performance
             <Button size="sm" variant="outline">
-              <ArrowsClockwise size={14} />
+              <RotateCcw size={14} />
             </Button>
           </CardTitle>
         </CardHeader>
@@ -343,7 +343,7 @@ export default function SystemMonitor() {
             <div className="space-y-3">
               <div className="p-3 rounded-lg border border-accent/20 bg-accent/5">
                 <div className="flex items-center gap-2 mb-2">
-                  <Lightning size={16} className="text-accent" />
+                  <Zap size={16} className="text-accent" />
                   <span className="text-sm font-medium">OptiX Acceleration</span>
                 </div>
                 <div className="text-xs text-muted-foreground">

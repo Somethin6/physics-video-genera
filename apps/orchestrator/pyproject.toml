@@ -71,7 +71,7 @@ types-pillow = "^10.1.0"
 pynvml = "^11.5.0"
 
 # Advanced Media Processing (optional)
-PyOpenColorIO = "^2.3.0"
+# PyOpenColorIO = "^2.3.0"  # Disabled - not available in this environment
 
 [build-system]
 requires = ["poetry-core"]

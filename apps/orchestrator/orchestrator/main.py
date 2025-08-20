@@ -31,6 +31,9 @@ from .core.media_pipeline import initialize_media_pipeline, media_pipeline
 from .core.quality_gates import quality_analyzer, default_quality_gate
 from .core.sandbox import sandbox_manager, execute_safe_code
 
+# Import API routers
+from .api import pipeline_router, projects_router, quality_router, audio_router
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -118,6 +121,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routers
+app.include_router(pipeline_router, prefix="/api/pipeline", tags=["pipeline"])
+app.include_router(projects_router, prefix="/api/projects", tags=["projects"])
+app.include_router(quality_router, prefix="/api/qa", tags=["quality"])
+app.include_router(audio_router, prefix="/api/audio", tags=["audio"])
 
 
 # Health and status endpoints

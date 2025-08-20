@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Pause, Upload, Waveform, AlignCenter, Clock, CheckCircle, AlertCircle, Volume2 } from 'lucide-react'
+import { Play, Pause, Upload, Activity, AlignCenter, Clock, CheckCircle, AlertCircle, Volume2 } from 'lucide-react'
 
 interface WordAlignment {
   word: string
@@ -350,7 +350,7 @@ const AudioAlignmentWorkspace: React.FC<AudioAlignmentWorkspaceProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Waveform size={20} />
+            <Activity size={20} />
             Script Alignment
           </CardTitle>
         </CardHeader>

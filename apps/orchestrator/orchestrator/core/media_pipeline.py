@@ -13,26 +13,48 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 from PIL import Image
 import OpenImageIO as oiio
-import PyOpenColorIO as ocio
 
 from .observability import RetryableOperation, process_manager
 
 logger = logging.getLogger(__name__)
+
+try:
+    import PyOpenColorIO as ocio
+    OCIO_AVAILABLE = True
+except ImportError:
+    ocio = None
+    OCIO_AVAILABLE = False
+    logger.warning("PyOpenColorIO not available - color management disabled")
 
 
 class ColorManager:
     """OCIO-based color management system"""
     
     def __init__(self, config_path: Optional[str] = None):
+        if not OCIO_AVAILABLE:
+            logger.warning("Color management disabled - PyOpenColorIO not available")
+            self.config = None
+            return
+            
         self.config_path = config_path or os.getenv('OCIO')
         if not self.config_path:
-            raise ValueError("OCIO config path required. Set OCIO environment variable.")
-        
-        self.config = ocio.Config.CreateFromFile(self.config_path)
-        logger.info(f"Loaded OCIO config: {self.config_path}")
+            logger.warning("OCIO config path not found. Color management disabled.")
+            self.config = None
+            return
+            return
+            
+        try:
+            self.config = ocio.Config.CreateFromFile(self.config_path)
+            logger.info(f"Loaded OCIO config: {self.config_path}")
+        except Exception as e:
+            logger.warning(f"Failed to load OCIO config: {e}. Color management disabled.")
+            self.config = None
     
     def get_display_transforms(self) -> List[str]:
         """Get available display transforms"""
+        if not self.config:
+            return ["sRGB (fallback)"]
+        
         displays = []
         for i in range(self.config.getNumDisplays()):
             displays.append(self.config.getDisplay(i))
@@ -40,6 +62,15 @@ class ColorManager:
     
     def get_current_config_info(self) -> Dict[str, str]:
         """Get current color config information for UI display"""
+        if not self.config:
+            return {
+                'config_path': 'Not available',
+                'description': 'Color management disabled - PyOpenColorIO not available',
+                'working_space': 'sRGB (fallback)',
+                'num_colorspaces': '0',
+                'num_displays': '1'
+            }
+        
         return {
             'config_path': self.config_path,
             'description': self.config.getDescription(),
@@ -57,6 +88,13 @@ class ColorManager:
         dst_colorspace: str
     ) -> bool:
         """Convert between color spaces using OCIO"""
+        if not self.config:
+            logger.warning("OCIO not available - copying file without color conversion")
+            # Just copy the file without conversion
+            import shutil
+            shutil.copy2(input_path, output_path)
+            return True
+        
         try:
             # Create processor
             processor = self.config.getProcessor(src_colorspace, dst_colorspace)

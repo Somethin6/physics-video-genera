@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Pause, Activity, TrendUp, AlertTriangle, CheckCircle, BarChart } from 'lucide-react'
+import { Play, Pause, Activity, TrendingUp, AlertTriangle, CheckCircle, BarChart } from 'lucide-react'
 import { OverallQAMetrics, FrameAnalysis } from '@/lib/qa-types'
 
 interface QAAnalysisDashboardProps {
@@ -164,7 +164,7 @@ export default function QAAnalysisDashboard({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendUp size={20} />
+            <TrendingUp size={20} />
             Recent Frame Analyses
           </CardTitle>
         </CardHeader>
