@@ -5,7 +5,7 @@ import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Pause, SkipBack, SkipForward, Microscope, Eye, GitCompare, BarChart3 } from '@phosphor-icons/react'
+import { Play, Pause, SkipBack, SkipForward, Microscope, Eye, GitCompare, BarChart3, Cpu } from '@phosphor-icons/react'
 import { RenderFrame, FrameIssue, Shot } from '@/lib/types'
 import { useRenderPreview, generateMockFrames } from '@/lib/renderAnalysis'
 import FrameViewer from '@/components/FrameViewer'
@@ -15,6 +15,7 @@ import FrameAnalyzer from '@/components/FrameAnalyzer'
 import QADashboard from '@/components/QADashboard'
 import AutoFixEngine from '@/components/AutoFixEngine'
 import QAMetricsView from '@/components/QAMetricsView'
+import RenderQAEngine from '@/components/RenderQAEngine'
 
 interface RenderPreviewSystemProps {
   shot: Shot
@@ -135,6 +136,10 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
                   <GitCompare size={16} />
                   Comparison
                 </TabsTrigger>
+                <TabsTrigger value="engine" className="gap-2">
+                  <Cpu size={16} />
+                  QA Engine
+                </TabsTrigger>
               </TabsList>
             </div>
             
@@ -194,6 +199,15 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
                   frames={frames}
                   currentFrame={currentFrame}
                   onFrameChange={setCurrentFrame}
+                />
+              </TabsContent>
+              
+              <TabsContent value="engine" className="h-full m-0 p-4 overflow-auto">
+                <RenderQAEngine
+                  shotId={shot.id}
+                  onAnalysisComplete={(results) => {
+                    console.log('Vision QA analysis complete:', results)
+                  }}
                 />
               </TabsContent>
             </div>
