@@ -84,6 +84,27 @@ export interface SignalAnalysis {
   issues: string[]
 }
 
+export interface QAResult {
+  frameIndex: number
+  timestamp: number
+  overallScore: number
+  llavaResponse: string
+  issues: FrameIssue[]
+  passed: boolean
+  confidence: number
+  analysisTime: number
+}
+
+export interface FrameIssue {
+  id: string
+  type: 'physics_accuracy' | 'visual_clarity' | 'timing' | 'continuity' | 'math_notation' | 'analysis_error'
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  description: string
+  suggestion: string
+  confidence: number
+  frameNumber: number
+}
+
 export interface RenderEngine {
   name: 'manim' | 'blender' | 'taichi' | 'matplotlib'
   status: 'idle' | 'busy' | 'error'

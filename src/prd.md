@@ -1,100 +1,155 @@
-# Physics Video Pipeline - Product Requirements Document
+# Physics Video Pipeline - Enhanced Frame-by-Frame QA System
 
 ## Core Purpose & Success
 
-**Mission Statement**: Create a local AI-driven physics video production system that generates publication-quality educational content from just a topic and duration input.
+**Mission Statement**: Create a comprehensive, AI-driven render preview system with frame-by-frame quality analysis for physics video production, ensuring scientific accuracy and visual excellence through automated LLaVA vision analysis and signal processing.
 
 **Success Indicators**: 
-- Complete automation from topic to final video output
-- Professional visual quality matching 3Blue1Brown standards
-- Accurate physics representation verified by AI vision analysis
-- Seamless voice synchronization with generated animations
+- Frame-by-frame QA analysis identifies physics inaccuracies before final render
+- LLaVA vision model correctly validates scientific demonstrations with >90% accuracy
+- Automated issue detection reduces manual QA time by 80%
+- Signal analysis metrics (SSIM, optical flow) catch technical quality issues
+- Comprehensive reporting enables data-driven render optimization
 
-**Experience Qualities**: Precise, Intelligent, Autonomous
+**Experience Qualities**: Precise, Intelligent, Comprehensive
 
 ## Project Classification & Approach
 
-**Complexity Level**: Complex Application (advanced functionality with AI orchestration, multiple render engines, and automated QA systems)
+**Complexity Level**: Complex Application - Advanced AI integration with computer vision, signal processing, and real-time analysis workflows
 
-**Primary User Activity**: Creating (physics video content through automated pipeline)
-
-## Core Problem Analysis
-
-The system solves the labor-intensive process of physics video creation by automating script generation, visual rendering, and quality assurance through local AI models.
-
-**User Context**: Content creators need professional physics animations without manual keyframing or preset dependencies.
-
-**Critical Path**: Topic Input → AI Script Generation → Multi-Engine Rendering → Vision QA → Voice Alignment → Final Output
-
-**Key Moments**: 
-1. LLaVA vision model validates physics accuracy in rendered frames
-2. Automated code generation creates fresh animations per shot
-3. Force-aligned voice synchronization with frame-perfect timing
+**Primary User Activity**: Analyzing - Users primarily examine rendered frames, validate physics accuracy, and make informed decisions about re-rendering based on detailed QA metrics
 
 ## Essential Features
 
-### Render Preview System
-- **Functionality**: Real-time frame preview with AI-powered QA analysis
-- **Purpose**: Verify physics accuracy and visual clarity before final render
-- **Success Criteria**: LLaVA model correctly identifies physics concepts in frames with >95% accuracy
+### Frame-by-Frame QA Inspector
+- **Functionality**: Deep analysis of individual frames with LLaVA vision model integration
+- **Purpose**: Identify physics inaccuracies, mathematical errors, and visual clarity issues at the frame level
+- **Success Criteria**: Detects physics violations with >85% accuracy, provides actionable feedback
 
-### Multi-Engine Orchestration
-- **Functionality**: Automatic routing between Manim, Blender, and Taichi based on content requirements
-- **Purpose**: Optimize rendering engine selection for different physics visualization needs
-- **Success Criteria**: Correct engine selection based on content analysis
+### Automated Batch Analysis Engine  
+- **Functionality**: Process entire shot sequences with AI-powered quality assessment
+- **Purpose**: Scale quality analysis across hundreds of frames efficiently
+- **Success Criteria**: Completes full shot analysis in <5 minutes, maintains consistent quality scoring
 
-### Automated Quality Assurance
-- **Functionality**: SSIM analysis, optical flow validation, and semantic verification
-- **Success Criteria**: Automated detection and correction of rendering issues
+### Real-time Preview with QA Overlay
+- **Functionality**: Live playback with quality indicators and issue highlighting
+- **Purpose**: Immediate visual feedback during review process
+- **Success Criteria**: Smooth 30fps playback with overlay performance impact <10%
+
+### Comprehensive QA Metrics Dashboard
+- **Functionality**: Statistical analysis of quality trends, issue patterns, and performance metrics
+- **Purpose**: Data-driven insights for render optimization and workflow improvement
+- **Success Criteria**: Provides actionable insights that improve overall shot quality by 25%
+
+### Physics-Specific Validation Rules
+- **Functionality**: Domain-specific checks for electromagnetic fields, equations, vector directions
+- **Purpose**: Ensure scientific accuracy in educational physics content
+- **Success Criteria**: Catches 95% of common physics visualization errors
 
 ## Design Direction
 
 ### Visual Tone & Identity
-**Emotional Response**: Professional confidence and technical precision
-**Design Personality**: Clean, methodical, and scientifically rigorous
-**Visual Metaphors**: Laboratory instruments, measurement precision, systematic workflows
-**Simplicity Spectrum**: Minimal interface that prioritizes function over decoration
+**Emotional Response**: Professional confidence mixed with scientific precision - users should feel like they're using a sophisticated research instrument that provides reliable, authoritative analysis.
+
+**Design Personality**: Clean and analytical, with subtle visual cues that emphasize accuracy and attention to detail. The interface should feel like a high-end scientific instrument.
+
+**Visual Metaphors**: Laboratory equipment aesthetics, precision measurement tools, and scientific analysis workflows. Color-coded quality indicators that mirror scientific measurement standards.
+
+**Simplicity Spectrum**: Rich interface - The complexity of the analysis requires comprehensive data presentation, but organized in logical, scannable sections.
 
 ### Color Strategy
-**Color Scheme Type**: Monochromatic with scientific accent colors
-**Primary Color**: Deep blue (oklch(0.35 0.15 230)) - represents analytical thinking and precision
-**Secondary Colors**: Dark charcoal (oklch(0.25 0.02 230)) - professional foundation
-**Accent Color**: Warm amber (oklch(0.65 0.18 45)) - highlights important status and progress
-**Color Psychology**: Blue builds trust in scientific accuracy, amber creates urgency for important alerts
-**Foreground/Background Pairings**: 
-- Background (oklch(0.95 0.02 230)) with Foreground (oklch(0.25 0.02 230)) - 16.75:1 contrast
-- Card (oklch(0.25 0.02 230)) with Card-foreground (oklch(0.95 0.02 230)) - 16.75:1 contrast
-- Primary (oklch(0.35 0.15 230)) with Primary-foreground (oklch(0.95 0.02 230)) - 11.2:1 contrast
+**Color Scheme Type**: Analogous (blue-green spectrum) with strategic accent colors for status indication
+
+**Primary Color**: Deep blue (#1e3a8a) - conveys scientific precision and reliability
+**Secondary Colors**: 
+- Teal (#0891b2) - for analysis tools and active states
+- Slate gray (#475569) - for secondary information and neutral elements
+
+**Accent Color**: Amber (#f59e0b) - for attention-grabbing elements like critical issues and important actions
+
+**Color Psychology**: Blue promotes trust and precision (essential for scientific tools), while amber creates urgency for issues requiring attention. The palette avoids aggressive reds except for critical errors.
+
+**Color Accessibility**: All color combinations exceed WCAG AA standards (4.5:1 contrast ratio)
+
+**Foreground/Background Pairings**:
+- Background (light blue-gray #f8fafc): Dark text (#0f172a) - 16.8:1 contrast ✓
+- Card (white #ffffff): Dark text (#0f172a) - 20.9:1 contrast ✓  
+- Primary (deep blue #1e3a8a): White text (#ffffff) - 8.6:1 contrast ✓
+- Secondary (slate #475569): White text (#ffffff) - 7.1:1 contrast ✓
+- Accent (amber #f59e0b): Dark text (#0f172a) - 10.4:1 contrast ✓
+- Muted (light gray #f1f5f9): Dark muted text (#475569) - 7.1:1 contrast ✓
 
 ### Typography System
-**Font Pairing Strategy**: Technical sans-serif paired with monospace for code/data
-**Typographic Hierarchy**: Clear distinction between headers, body text, and technical readouts
-**Font Personality**: Scientific precision and computational clarity
-**Which fonts**: Inter for UI elements, JetBrains Mono for technical data and code
-**Legibility Check**: Both fonts optimize for on-screen reading and technical accuracy
+**Font Pairing Strategy**: Technical precision with readable analysis text
+- Primary: Inter (sans-serif) for UI elements and descriptive text - clean, highly legible
+- Secondary: JetBrains Mono (monospace) for metrics, scores, and technical data - ensures perfect alignment of numerical data
+
+**Typographic Hierarchy**:
+- H1: 24px/1.2 Inter Bold - main titles
+- H2: 20px/1.3 Inter Semibold - section headers  
+- H3: 16px/1.4 Inter Medium - subsection headers
+- Body: 14px/1.5 Inter Regular - main content
+- Caption: 12px/1.4 Inter Regular - metadata and labels
+- Code: 14px/1.4 JetBrains Mono - metrics and values
+
+**Font Personality**: Clinical precision with human readability
+**Readability Focus**: Line length 45-75 characters, generous spacing for data-heavy content
+**Typography Consistency**: Consistent weight relationships across all analysis panels
+
+**Which fonts**: Inter and JetBrains Mono from Google Fonts
+**Legibility Check**: Both fonts tested and optimized for extended analysis sessions
 
 ### Visual Hierarchy & Layout
-**Attention Direction**: Progress indicators and status alerts draw focus to pipeline state
-**White Space Philosophy**: Generous spacing prevents cognitive overload during complex operations
-**Grid System**: Modular layout supporting dynamic content and real-time updates
-**Content Density**: Balanced information display without overwhelming the user
+**Attention Direction**: Progressive disclosure from overview metrics → detailed frame analysis → specific issue diagnosis
+**White Space Philosophy**: Generous spacing around data blocks to prevent cognitive overload during analysis
+**Grid System**: 12-column grid with consistent 24px gutters, allowing for flexible dashboard layouts
+**Responsive Approach**: Stacked layout on mobile, side-by-side panels on desktop for efficient comparison
+**Content Density**: High information density balanced with scannable organization
 
 ### Animations
-**Purposeful Meaning**: Subtle progress animations communicate system activity and completion states
-**Hierarchy of Movement**: Critical status changes receive priority animation treatment
-**Contextual Appropriateness**: Minimal motion design respects the scientific/technical context
+**Purposeful Meaning**: Subtle transitions emphasize quality score changes and analysis progress
+**Hierarchy of Movement**: Most motion on loading states and data updates, minimal motion during analysis to avoid distraction
+**Contextual Appropriateness**: Smooth but understated - supporting the professional, scientific feel
 
 ### UI Elements & Component Selection
-**Component Usage**: Cards for project organization, Progress bars for pipeline status, Tabs for system monitoring
-**Component Customization**: Dark theme with accent colors for status indication
-**Mobile Adaptation**: Responsive grid layout that maintains functionality on smaller screens
+**Component Usage**:
+- Cards for frame analysis results and metric groupings
+- Progress bars for quality scores and analysis completion
+- Badges for status indicators and issue severity levels
+- Tabs for organizing different analysis views
+- Alerts for critical findings and recommendations
+
+**Component Customization**: 
+- Progress bars use color gradients to indicate quality thresholds
+- Badges sized and colored for quick severity scanning
+- Cards with subtle borders to organize complex data
+
+**Component States**: Clear hover, focus, and loading states for all interactive elements
+**Icon Selection**: Phosphor icons emphasizing analysis tools (microscope, eye, brain, charts)
+**Component Hierarchy**: Clear primary/secondary/tertiary button relationships
+**Spacing System**: 4px base unit (4, 8, 12, 16, 24, 32, 48px) for consistent rhythm
+**Mobile Adaptation**: Collapsible panels and simplified metric views for smaller screens
+
+### Accessibility & Readability
+**Contrast Goal**: WCAG AA compliance minimum, AAA where possible for metric values and critical information
+
+## Edge Cases & Problem Scenarios
+**Potential Obstacles**: 
+- LLaVA model unavailable or slow response times
+- Large frame sequences causing memory issues  
+- Physics validation rules producing false positives
+- Network connectivity issues during analysis
+
+**Edge Case Handling**:
+- Graceful degradation to signal-only analysis when vision model fails
+- Progressive loading and virtual scrolling for large frame sets
+- Confidence scoring and manual override options for AI decisions
+- Offline analysis mode with cached models
 
 ## Implementation Considerations
-
-**Scalability Needs**: Support for multiple concurrent projects and render queue management
-**Testing Focus**: Validation of AI model accuracy and rendering pipeline reliability
-**Critical Questions**: How to balance render quality with processing time on target hardware
+**Scalability Needs**: Support for 1000+ frame sequences, multiple concurrent analyses
+**Testing Focus**: Accuracy of physics validation rules, performance with large datasets
+**Critical Questions**: How to balance analysis depth with speed? What confidence thresholds trigger manual review?
 
 ## Reflection
-
-This approach uniquely combines local AI inference with professional video production workflows, eliminating dependency on cloud services while maintaining broadcast-quality output. The system's strength lies in its automated verification loops and procedural asset generation.
+This system uniquely combines computer vision AI with domain-specific physics knowledge to create a QA tool tailored for educational video production. The approach leverages LLaVA's vision capabilities while adding structured analysis frameworks specific to physics demonstrations, creating value that generic video QA tools cannot match.

@@ -20,7 +20,7 @@ import {
 } from '@phosphor-icons/react'
 import { Project, Shot } from '@/lib/types'
 import ProjectDetails from '@/components/ProjectDetails'
-import RenderPreview from '@/components/RenderPreview'
+import RenderPreviewSystem from '@/components/RenderPreviewSystem'
 import QAInstructions from '@/components/QAInstructions'
 
 interface ProjectDashboardProps {
@@ -82,10 +82,24 @@ export default function ProjectDashboard({ projects, onUpdateProject, onCreatePr
   }
 
   if (previewShot) {
+    // Create a mock shot for the preview system
+    const mockShot: Shot = {
+      id: previewShot.shotId,
+      projectId: previewShot.projectId,
+      sequence: 1,
+      title: 'Preview Shot',
+      script: 'Sample physics demonstration',
+      duration: 30,
+      renderer: 'manim',
+      status: 'rendering',
+      attempts: 1,
+      maxAttempts: 3,
+      frames: []
+    }
+
     return (
-      <RenderPreview 
-        projectId={previewShot.projectId}
-        shotId={previewShot.shotId}
+      <RenderPreviewSystem 
+        shot={mockShot}
         onClose={() => setPreviewShot(null)}
       />
     )

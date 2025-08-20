@@ -16,6 +16,9 @@ import QADashboard from '@/components/QADashboard'
 import AutoFixEngine from '@/components/AutoFixEngine'
 import QAMetricsView from '@/components/QAMetricsView'
 import RenderQAEngine from '@/components/RenderQAEngine'
+import FrameQAInspector from '@/components/FrameQAInspector'
+import FrameByFrameQAEngine from '@/components/FrameByFrameQAEngine'
+import QASummaryDashboard from '@/components/QASummaryDashboard'
 
 interface RenderPreviewSystemProps {
   shot: Shot
@@ -37,6 +40,7 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const [activeTab, setActiveTab] = useState('preview')
+  const [qaResults, setQAResults] = useState<any[]>([]) // Store QA analysis results
   
   // Initialize with mock frames if empty
   useEffect(() => {
@@ -124,6 +128,10 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
                   <Eye size={16} />
                   Frame Preview
                 </TabsTrigger>
+                <TabsTrigger value="inspector" className="gap-2">
+                  <Microscope size={16} />
+                  Frame Inspector
+                </TabsTrigger>
                 <TabsTrigger value="analysis" className="gap-2">
                   <Microscope size={16} />
                   Quality Analysis
@@ -150,6 +158,33 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
                   showIssueOverlays={true}
                   className=\"h-full\"
                 />
+              </TabsContent>
+              
+              <TabsContent value="inspector" className="h-full m-0 p-4 overflow-auto">
+                {currentFrameData ? (
+                  <FrameQAInspector
+                    frame={currentFrameData}
+                    onIssueDetected={(issue) => {
+                      console.log('New issue detected:', issue)
+                      // Update frame with new issue
+                      setFrames(currentFrames => 
+                        currentFrames.map(f => 
+                          f.frameNumber === currentFrameData.frameNumber
+                            ? { ...f, issues: [...(f.issues || []), issue] }
+                            : f
+                        )
+                      )
+                    }}
+                    onRetryFrame={() => {
+                      console.log('Retrying frame:', currentFrame)
+                      // Trigger frame re-render
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-muted-foreground">No frame selected for inspection</p>
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="analysis" className="h-full m-0 p-4 overflow-auto">
@@ -186,12 +221,27 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
               </TabsContent>
               
               <TabsContent value="metrics" className="h-full m-0 p-4 overflow-auto">
-                <QAMetricsView
-                  shotId={shot.id}
-                  onRefreshMetrics={() => {
-                    console.log('Refreshing QA metrics for shot:', shot.id)
-                  }}
-                />
+                <div className="space-y-6">
+                  <QASummaryDashboard
+                    frames={frames}
+                    qaResults={qaResults}
+                    onExportReport={() => {
+                      console.log('Exporting QA report for shot:', shot.id)
+                      // Generate and download comprehensive QA report
+                    }}
+                    onRetryFailedFrames={() => {
+                      console.log('Retrying failed frames for shot:', shot.id)
+                      // Re-render frames that failed QA checks
+                    }}
+                  />
+                  
+                  <QAMetricsView
+                    shotId={shot.id}
+                    onRefreshMetrics={() => {
+                      console.log('Refreshing QA metrics for shot:', shot.id)
+                    }}
+                  />
+                </div>
               </TabsContent>
               
               <TabsContent value="comparison" className="h-full m-0">
@@ -203,12 +253,42 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
               </TabsContent>
               
               <TabsContent value="engine" className="h-full m-0 p-4 overflow-auto">
-                <RenderQAEngine
-                  shotId={shot.id}
-                  onAnalysisComplete={(results) => {
-                    console.log('Vision QA analysis complete:', results)
-                  }}
-                />
+                <div className="space-y-6">
+                  <FrameByFrameQAEngine
+                    shotId={shot.id}
+                    frames={frames}
+                    onAnalysisComplete={(results) => {
+                      console.log('Frame-by-frame analysis complete:', results)
+                      setQAResults(results) // Store results for summary dashboard
+                      // Update frames with QA results
+                      setFrames(currentFrames => 
+                        currentFrames.map((frame, index) => ({
+                          ...frame,
+                          qaScore: results[index]?.overallScore,
+                          issues: results[index]?.issues || []
+                        }))
+                      )
+                    }}
+                    onIssuesDetected={(frameIndex, issues) => {
+                      console.log(`Issues detected in frame ${frameIndex}:`, issues)
+                      // Update specific frame with detected issues
+                      setFrames(currentFrames => 
+                        currentFrames.map((frame, index) => 
+                          index === frameIndex 
+                            ? { ...frame, issues: [...(frame.issues || []), ...issues] }
+                            : frame
+                        )
+                      )
+                    }}
+                  />
+                  
+                  <RenderQAEngine
+                    shotId={shot.id}
+                    onAnalysisComplete={(results) => {
+                      console.log('Vision QA analysis complete:', results)
+                    }}
+                  />
+                </div>
               </TabsContent>
             </div>
           </Tabs>
