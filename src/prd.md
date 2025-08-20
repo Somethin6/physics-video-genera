@@ -44,10 +44,15 @@
 - **Purpose**: Leverage specialized tools for optimal visual representation
 - **Success Criteria**: Seamless integration between mathematical derivations, physics simulations, and cinematic visuals
 
-### Real-Time Pipeline Monitoring
-- **Functionality**: Live dashboard showing every step of video generation with streaming updates
-- **Purpose**: Provide transparency and control over the automated process
-- **Success Criteria**: Users can monitor, intervene, and understand AI decisions
+### Advanced Render Preview & QA System
+- **Functionality**: Frame-by-frame quality analysis with computer vision metrics and issue detection
+- **Purpose**: Ensure broadcast-quality output through automated quality assurance
+- **Success Criteria**: Detect and flag visual issues before final render, maintain consistent quality across sequences
+
+### Voice Synchronization & Alignment
+- **Functionality**: Word-level forced alignment with automatic timing adjustment
+- **Purpose**: Achieve perfect synchronization between narration and visual elements
+- **Success Criteria**: Frame-accurate alignment with sub-second precision
 
 ### Frame-by-Frame Quality Assurance
 - **Functionality**: Automated visual analysis using SSIM, optical flow, and LLaVA vision model
@@ -107,12 +112,22 @@
 ### UI Elements & Component Selection
 **Component Usage**:
 - Cards for major feature areas and pipeline steps
-- Tabs for switching between different workflow views
+- Tabs for switching between different workflow views  
 - Progress bars for long-running operations
 - Code editors with syntax highlighting for generated scripts
 - Real-time charts for system monitoring
+- Video preview with interactive timeline and frame navigation
+- Overlay annotations for QA issue highlighting
+- Comparative frame analysis with side-by-side views
 
 **Component Customization**: Darker theme with scientific styling, monospace fonts for technical data
+
+### Enhanced Video Preview Interface
+**Real-Time Playback**: Smooth video playback with frame-accurate scrubbing and timeline navigation
+**QA Overlay System**: Visual indicators overlaid on video frames showing detected issues with severity colors
+**Frame Status Visualization**: Timeline bar showing quality status for each frame (green=good, yellow=warning, red=critical)
+**Interactive Analysis**: Click any frame for detailed metrics and issue breakdown
+**Batch Processing UI**: Configure and monitor bulk frame analysis with real-time progress
 
 ### Accessibility & Readability
 **Contrast Goal**: WCAG AAA compliance (7:1 minimum contrast ratio) for all text
