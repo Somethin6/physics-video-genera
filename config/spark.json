@@ -1,0 +1,79 @@
+{
+  "prompts": {
+    "script_generation": {
+      "system": "You are an expert physics educator creating engaging video content. Generate clear, accurate physics explanations with appropriate visual directives for animation engines.",
+      "template": "Create a {duration}-second video script explaining {topic} at {level} level. Include:\n\n1. Story beats with timing\n2. Animation directives for each concept\n3. Engine selection (manim/taichi/blender)\n4. Narration text\n\nTopic: {topic}\nLevel: {level}\nDuration: {duration} seconds\nStyle: {style}",
+      "temperature": 0.7,
+      "max_tokens": 2048
+    },
+    "code_generation": {
+      "system": "You are an expert in Manim, Taichi, and Blender scripting. Generate clean, efficient code for physics visualizations.",
+      "template": "Generate {engine} code for this physics concept:\n\nConcept: {concept}\nDescription: {description}\nDuration: {duration}s\nStyle: {style}\n\nRequirements:\n- Follow best practices\n- Include error handling\n- Optimize for rendering performance\n- Add meaningful comments",
+      "temperature": 0.3,
+      "max_tokens": 1024
+    },
+    "script_critique": {
+      "system": "You are a physics education expert reviewing video scripts for accuracy and engagement.",
+      "template": "Review this physics video script for:\n\n1. Scientific accuracy\n2. Educational clarity\n3. Appropriate difficulty level\n4. Engaging narrative flow\n\nScript: {script}\nLevel: {level}\n\nProvide specific feedback and suggestions for improvement.",
+      "temperature": 0.5,
+      "max_tokens": 1024
+    },
+    "error_analysis": {
+      "system": "You are a technical expert analyzing pipeline errors and suggesting fixes.",
+      "template": "Analyze this error and suggest a fix:\n\nError Code: {error_code}\nCommand: {command}\nStderr: {stderr}\nContext: {context}\n\nProvide:\n1. Root cause analysis\n2. Specific fix steps\n3. Prevention strategies",
+      "temperature": 0.2,
+      "max_tokens": 512
+    }
+  },
+  "sampling": {
+    "default_temperature": 0.7,
+    "default_top_p": 0.9,
+    "default_frequency_penalty": 0.0,
+    "default_presence_penalty": 0.0,
+    "default_max_tokens": 1024
+  },
+  "engines": {
+    "manim": {
+      "best_for": ["mathematical_equations", "graphs", "geometric_animations", "2d_physics"],
+      "complexity_limit": "medium",
+      "typical_duration": 120
+    },
+    "taichi": {
+      "best_for": ["fluid_dynamics", "particle_systems", "wave_simulations", "field_visualizations"],
+      "complexity_limit": "high", 
+      "typical_duration": 300
+    },
+    "blender": {
+      "best_for": ["3d_models", "realistic_physics", "cinematic_sequences", "complex_lighting"],
+      "complexity_limit": "high",
+      "typical_duration": 600
+    }
+  },
+  "topics": {
+    "classical_mechanics": {
+      "concepts": ["kinematics", "forces", "energy", "momentum", "rotation"],
+      "typical_engines": ["manim", "blender"],
+      "complexity": "medium"
+    },
+    "electromagnetism": {
+      "concepts": ["electric_fields", "magnetic_fields", "waves", "circuits"],
+      "typical_engines": ["manim", "taichi"],
+      "complexity": "high"
+    },
+    "quantum_mechanics": {
+      "concepts": ["wave_functions", "uncertainty", "entanglement", "measurements"],
+      "typical_engines": ["manim", "taichi"],
+      "complexity": "high"
+    },
+    "thermodynamics": {
+      "concepts": ["heat_transfer", "entropy", "phase_transitions", "gases"],
+      "typical_engines": ["taichi", "blender"],
+      "complexity": "medium"
+    },
+    "optics": {
+      "concepts": ["refraction", "interference", "diffraction", "polarization"],
+      "typical_engines": ["manim", "blender"],
+      "complexity": "medium"
+    }
+  }
+}
