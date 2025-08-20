@@ -6,6 +6,7 @@ import { Plus } from '@phosphor-icons/react'
 import ProjectDashboard from '@/components/ProjectDashboard'
 import ProjectCreation from '@/components/ProjectCreation'
 import SystemMonitor from '@/components/SystemMonitor'
+import PipelineSettings from '@/components/PipelineSettings'
 import { Project } from '@/lib/types'
 
 function App() {
@@ -75,6 +76,7 @@ function App() {
                   current.map(p => p.id === updatedProject.id ? updatedProject : p)
                 )
               }}
+              onCreateProject={createProject}
             />
           </TabsContent>
 
@@ -83,9 +85,7 @@ function App() {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <div className="text-center py-12 text-muted-foreground">
-              Pipeline configuration and model management coming soon
-            </div>
+            <PipelineSettings />
           </TabsContent>
         </Tabs>
       </main>

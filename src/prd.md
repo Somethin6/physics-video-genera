@@ -1,80 +1,70 @@
-# Physics Video Pipeline - Render Preview & QA System
+# Product Requirements Document: Render Preview & QA Analysis System
 
 ## Core Purpose & Success
-- **Mission Statement**: Provide real-time visual feedback and automated quality analysis for physics video renders with frame-level precision and AI-powered content validation.
-- **Success Indicators**: Frame analysis completion rate >95%, QA issue detection accuracy >90%, preview loading time <2s per shot
-- **Experience Qualities**: Professional, Analytical, Responsive
+- **Mission Statement**: Create a comprehensive render preview interface that enables frame-by-frame quality analysis using LLaVA vision models and quantitative metrics for the physics video pipeline.
+- **Success Indicators**: Users can efficiently review render quality, identify visual issues, and track QA metrics across all shots in their projects.
+- **Experience Qualities**: Scientific, precise, efficient - providing deep analytical insight into render quality.
 
 ## Project Classification & Approach
-- **Complexity Level**: Complex Application (advanced functionality with real-time analysis)
-- **Primary User Activity**: Analyzing and Iterating on render quality
+- **Complexity Level**: Complex Application (advanced functionality with sophisticated state management)
+- **Primary User Activity**: Analyzing rendered frames with AI-powered quality assessment
 
 ## Thought Process for Feature Selection
-- **Core Problem Analysis**: Manual quality checking of physics video renders is time-intensive and inconsistent
-- **User Context**: Video creators need immediate feedback on render quality during production pipeline
-- **Critical Path**: Upload/select render → Frame extraction → AI analysis → Visual feedback → Issue resolution
-- **Key Moments**: Frame preview with overlay annotations, AI quality scores, side-by-side comparisons
+- **Core Problem Analysis**: Need to implement the "self-watching" capability described in the pipeline - LLaVA vision analysis plus quantitative metrics (SSIM, optical flow) for render quality control.
+- **User Context**: Users need to review shots after rendering to ensure visual accuracy and alignment with script requirements.
+- **Critical Path**: Load shot → Display frames → Run QA analysis → Review results → Flag issues for re-rendering
+- **Key Moments**: Initial frame loading, QA analysis execution, results interpretation
 
 ## Essential Features
-
-### Frame-by-Frame Preview System
-- **Functionality**: Interactive scrubbing through render frames with zoom and pan capabilities
-- **Purpose**: Allow detailed inspection of visual elements at any point in the timeline
-- **Success Criteria**: Smooth 60fps scrubbing, sub-100ms frame switching response
-
-### AI-Powered QA Analysis
-- **Functionality**: Automated content validation using vision models to check physics accuracy
-- **Purpose**: Catch visual inconsistencies and physics representation errors automatically
-- **Success Criteria**: Identify 90%+ of common physics visualization issues
-
-### Visual Annotation System
-- **Functionality**: Overlay system showing detected issues, quality scores, and improvement suggestions
-- **Purpose**: Provide actionable feedback directly on problematic frame regions
-- **Success Criteria**: Clear visual indicators with contextual suggestions
-
-### Comparison Tools
-- **Functionality**: Side-by-side frame comparison between renders and reference materials
-- **Purpose**: Validate improvements and track iteration progress
-- **Success Criteria**: Synchronized scrubbing, difference highlighting
+1. **Frame Preview Interface**: Display rendered frames with timeline scrubbing and comparison tools
+2. **LLaVA Vision Analysis**: AI-powered semantic analysis asking targeted questions about frame content
+3. **Quantitative Metrics**: SSIM comparison and optical flow analysis for technical quality assessment
+4. **QA Results Dashboard**: Comprehensive scoring and issue identification system
+5. **Batch Analysis**: Process multiple shots/frames automatically
 
 ## Design Direction
 
 ### Visual Tone & Identity
-- **Emotional Response**: Professional confidence with scientific precision
-- **Design Personality**: Clean, technical, data-driven with subtle depth
-- **Visual Metaphors**: Laboratory instruments, scientific measurement tools
-- **Simplicity Spectrum**: Rich interface with organized complexity
+- **Emotional Response**: Professional confidence and analytical precision
+- **Design Personality**: Scientific, methodical, technical but accessible
+- **Visual Metaphors**: Laboratory analysis, diagnostic tools, precision instruments
+- **Simplicity Spectrum**: Rich interface with detailed data visualization
 
 ### Color Strategy
 - **Color Scheme Type**: Monochromatic with accent highlights
-- **Primary Color**: Deep blue-gray representing precision and analysis
-- **Secondary Colors**: Neutral grays for interface chrome
-- **Accent Color**: Bright amber for attention and warnings
-- **Color Psychology**: Blue conveys trust and accuracy, amber creates urgency for issues
+- **Primary Color**: Deep blue-gray for professionalism and focus
+- **Secondary Colors**: Neutral grays for data visualization
+- **Accent Color**: Orange for attention-grabbing alerts and key actions
+- **Color Psychology**: Blues convey trust and precision, orange highlights important issues
 - **Foreground/Background Pairings**: 
-  - Background (light gray) + Foreground (dark gray) = 7.2:1 contrast
-  - Card (dark blue-gray) + Card-foreground (light blue-gray) = 8.1:1 contrast
-  - Primary (deep blue) + Primary-foreground (white) = 9.5:1 contrast
-  - Accent (amber) + Accent-foreground (dark gray) = 6.8:1 contrast
+  - Background (light gray): Dark gray text (high contrast)
+  - Card (dark blue-gray): Light gray text (professional)
+  - Primary (deep blue): White text (clear readability)
+  - Accent (orange): White text (high visibility)
 
 ### Typography System
-- **Font Pairing Strategy**: Technical monospace for data, clean sans-serif for interface
-- **Typographic Hierarchy**: Bold headings, medium body text, monospace for technical data
-- **Font Personality**: Scientific precision with approachable clarity
-- **Which fonts**: Inter for UI elements, JetBrains Mono for technical data and code
-- **Legibility Check**: Both fonts tested for extended reading at various sizes
+- **Font Pairing Strategy**: Technical monospace for metrics, clean sans-serif for UI
+- **Typographic Hierarchy**: Clear distinction between data labels, values, and descriptions
+- **Font Personality**: Precise, technical, reliable
+- **Which fonts**: JetBrains Mono for code/metrics, Inter for interface text
+- **Legibility Check**: High contrast ratios maintained for all critical information
 
 ### Visual Hierarchy & Layout
-- **Attention Direction**: Frame preview as primary focus, analysis panel as supporting context
-- **Grid System**: 12-column grid with consistent 24px gutters
-- **Responsive Approach**: Collapsible panels for smaller screens, full layout for analysis work
+- **Attention Direction**: Frame preview as primary focus, with QA metrics in supporting panels
+- **Grid System**: 12-column layout for flexible panel arrangement
+- **Responsive Approach**: Collapsible panels for different screen sizes
+- **Content Density**: Information-rich but organized into logical sections
+
+### Animations
+- **Purposeful Meaning**: Smooth transitions between frames, loading indicators for analysis
+- **Hierarchy of Movement**: Subtle hover effects, progress indicators during processing
+- **Contextual Appropriateness**: Minimal distraction from analytical tasks
 
 ### UI Elements & Component Selection
-- **Component Usage**: Tabs for different analysis modes, Cards for issue grouping, Progress bars for processing
-- **Component States**: Clear loading states, error highlights, success confirmations
-- **Icon Selection**: Scientific/measurement icons from Phosphor set
-- **Spacing System**: 4px base unit scaling (4, 8, 16, 24, 32px)
+- **Component Usage**: Cards for metric displays, Tabs for different analysis views, Progress bars for batch processing
+- **Component Customization**: Dark theme adaptation for extended viewing sessions
+- **Spacing System**: Consistent padding using Tailwind's spacing scale
+- **Mobile Adaptation**: Simplified layout with scrollable metric panels
 
 ### Accessibility & Readability
-- **Contrast Goal**: WCAG AAA compliance for all text elements
-- All color combinations tested against 7:1 contrast ratio minimum
+- **Contrast Goal**: WCAG AA compliance for all text and interface elements

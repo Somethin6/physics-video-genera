@@ -15,20 +15,23 @@ import {
   CheckCircle,
   Warning,
   Clock,
-  Monitor
+  Monitor,
+  FlaskConical
 } from '@phosphor-icons/react'
 import { Project, Shot } from '@/lib/types'
 import ProjectDetails from '@/components/ProjectDetails'
-import RenderPreviewSystem from '@/components/RenderPreviewSystem'
+import RenderPreview from '@/components/RenderPreview'
+import QAInstructions from '@/components/QAInstructions'
 
 interface ProjectDashboardProps {
   projects: Project[]
   onUpdateProject: (project: Project) => void
+  onCreateProject?: (project: Omit<Project, 'id' | 'createdAt' | 'status' | 'progress'>) => void
 }
 
-export default function ProjectDashboard({ projects, onUpdateProject }: ProjectDashboardProps) {
+export default function ProjectDashboard({ projects, onUpdateProject, onCreateProject }: ProjectDashboardProps) {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
-  const [showRenderPreview, setShowRenderPreview] = useState<Shot | null>(null)
+  const [previewShot, setPreviewShot] = useState<{ projectId: string; shotId: string } | null>(null)
 
   const getStatusColor = (status: Project['status']) => {
     switch (status) {
@@ -62,11 +65,28 @@ export default function ProjectDashboard({ projects, onUpdateProject }: ProjectD
   const activeProjects = projects.filter(p => !['completed', 'error'].includes(p.status))
   const completedProjects = projects.filter(p => p.status === 'completed')
 
-  if (showRenderPreview) {
+  const createDemoProject = () => {
+    if (!onCreateProject) return
+    
+    onCreateProject({
+      title: "Maxwell's Equations Demo",
+      topic: "Electromagnetic field theory focusing on Maxwell's equations and their physical interpretations, including electric fields, magnetic fields, and electromagnetic wave propagation",
+      duration: 8.5,
+      description: "Comprehensive demonstration of electromagnetic theory with interactive visualizations",
+      settings: {
+        quality: 'standard',
+        renderer: 'auto',
+        resolution: '1080p'
+      }
+    })
+  }
+
+  if (previewShot) {
     return (
-      <RenderPreviewSystem 
-        shot={showRenderPreview}
-        onClose={() => setShowRenderPreview(null)}
+      <RenderPreview 
+        projectId={previewShot.projectId}
+        shotId={previewShot.shotId}
+        onClose={() => setPreviewShot(null)}
       />
     )
   }
@@ -77,13 +97,17 @@ export default function ProjectDashboard({ projects, onUpdateProject }: ProjectD
         project={selectedProject} 
         onBack={() => setSelectedProject(null)}
         onUpdateProject={onUpdateProject}
-        onOpenRenderPreview={setShowRenderPreview}
+        onOpenRenderPreview={(shot) => setPreviewShot({ projectId: selectedProject.id, shotId: shot.id })}
       />
     )
   }
 
   return (
     <div className="space-y-6">
+      {projects.length === 0 ? (
+        <QAInstructions />
+      ) : null}
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-6">
@@ -143,9 +167,19 @@ export default function ProjectDashboard({ projects, onUpdateProject }: ProjectD
               <CardContent className="py-12 text-center">
                 <VideoCamera size={48} className="mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No active projects</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1 mb-4">
                   Create your first physics video project to get started
                 </p>
+                {onCreateProject && (
+                  <Button
+                    onClick={createDemoProject}
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    <FlaskConical size={16} />
+                    Create Demo Project
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -206,6 +240,14 @@ export default function ProjectDashboard({ projects, onUpdateProject }: ProjectD
                         className="flex-1"
                       >
                         View Details
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setPreviewShot({ projectId: project.id, shotId: 'S001' })}
+                        title="Quick Preview"
+                      >
+                        <Monitor size={14} />
                       </Button>
                       <Button size="sm" variant="outline">
                         <Pause size={14} />

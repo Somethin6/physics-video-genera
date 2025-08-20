@@ -14,6 +14,11 @@ export interface Project {
     qa: number
     assembly: number
   }
+  settings?: {
+    quality: 'draft' | 'standard' | 'high'
+    renderer: 'auto' | 'manim' | 'blender' | 'taichi'
+    resolution: '720p' | '1080p' | '4k'
+  }
   shots?: Shot[]
 }
 
