@@ -2,22 +2,25 @@
 
 ## Core Purpose & Success
 - **Mission Statement**: Create a comprehensive render preview interface that enables frame-by-frame quality analysis using LLaVA vision models and quantitative metrics for the physics video pipeline.
-- **Success Indicators**: Users can efficiently review render quality, identify visual issues, and track QA metrics across all shots in their projects.
-- **Experience Qualities**: Scientific, precise, efficient - providing deep analytical insight into render quality.
+- **Success Indicators**: Users can efficiently review render quality, identify visual issues, and track QA metrics across all shots with automated fix suggestions.
+- **Experience Qualities**: Scientific, precise, efficient - providing deep analytical insight into render quality with autonomous improvement capabilities.
 
 ## Project Classification & Approach
-- **Complexity Level**: Complex Application (advanced functionality with sophisticated state management)
-- **Primary User Activity**: Analyzing rendered frames with AI-powered quality assessment
+- **Complexity Level**: Complex Application (advanced functionality with sophisticated state management and AI integration)
+- **Primary User Activity**: Analyzing rendered frames with AI-powered quality assessment and automated code revision
 
 ## Thought Process for Feature Selection
-- **Core Problem Analysis**: Need to implement the "self-watching" capability described in the pipeline - LLaVA vision analysis plus quantitative metrics (SSIM, optical flow) for render quality control.
-- **User Context**: Users need to review shots after rendering to ensure visual accuracy and alignment with script requirements.
-- **Critical Path**: Load shot → Display frames → Run QA analysis → Review results → Flag issues for re-rendering
-- **Key Moments**: Initial frame loading, QA analysis execution, results interpretation
+- **Core Problem Analysis**: Implement the complete "self-watching" pipeline - LLaVA vision analysis, SSIM metrics, optical flow validation, and automated code fixing.
+- **User Context**: Users initiate analysis and monitor autonomous QA processes that identify issues and generate fixes.
+- **Critical Path**: Load shot → Run comprehensive QA → Review analysis → Trigger auto-fix → Validate improvements
+- **Key Moments**: QA analysis execution, issue identification, code revision completion
 
 ## Essential Features
-1. **Frame Preview Interface**: Display rendered frames with timeline scrubbing and comparison tools
-2. **LLaVA Vision Analysis**: AI-powered semantic analysis asking targeted questions about frame content
+1. **Frame-by-Frame Analyzer**: LLaVA-powered semantic analysis with configurable script checks
+2. **QA Dashboard**: Comprehensive metrics tracking with SSIM distribution and performance analytics  
+3. **Auto-Fix Engine**: Automated code revision system that iteratively improves render quality
+4. **Metrics Visualization**: Real-time analysis of quality scores, frame distribution, and performance data
+5. **Integrated Preview System**: Frame viewer with quality overlays and timeline navigation
 3. **Quantitative Metrics**: SSIM comparison and optical flow analysis for technical quality assessment
 4. **QA Results Dashboard**: Comprehensive scoring and issue identification system
 5. **Batch Analysis**: Process multiple shots/frames automatically

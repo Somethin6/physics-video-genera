@@ -5,12 +5,16 @@ import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Pause, SkipBack, SkipForward, Microscope, Eye, GitCompare } from '@phosphor-icons/react'
+import { Play, Pause, SkipBack, SkipForward, Microscope, Eye, GitCompare, BarChart3 } from '@phosphor-icons/react'
 import { RenderFrame, FrameIssue, Shot } from '@/lib/types'
 import { useRenderPreview, generateMockFrames } from '@/lib/renderAnalysis'
 import FrameViewer from '@/components/FrameViewer'
 import QualityAnalysis from '@/components/QualityAnalysis'
 import ComparisonView from '@/components/ComparisonView'
+import FrameAnalyzer from '@/components/FrameAnalyzer'
+import QADashboard from '@/components/QADashboard'
+import AutoFixEngine from '@/components/AutoFixEngine'
+import QAMetricsView from '@/components/QAMetricsView'
 
 interface RenderPreviewSystemProps {
   shot: Shot
@@ -115,15 +119,19 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
           <Tabs value={activeTab} onValueChange={setActiveTab} className=\"flex-1 flex flex-col\">
             <div className=\"border-b border-border px-4\">
               <TabsList>
-                <TabsTrigger value=\"preview\" className=\"gap-2\">
+                <TabsTrigger value="preview" className="gap-2">
                   <Eye size={16} />
                   Frame Preview
                 </TabsTrigger>
-                <TabsTrigger value=\"analysis\" className=\"gap-2\">
+                <TabsTrigger value="analysis" className="gap-2">
                   <Microscope size={16} />
                   Quality Analysis
                 </TabsTrigger>
-                <TabsTrigger value=\"comparison\" className=\"gap-2\">
+                <TabsTrigger value="metrics" className="gap-2">
+                  <BarChart3 size={16} />
+                  Metrics
+                </TabsTrigger>
+                <TabsTrigger value="comparison" className="gap-2">
                   <GitCompare size={16} />
                   Comparison
                 </TabsTrigger>
@@ -139,16 +147,49 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
                 />
               </TabsContent>
               
-              <TabsContent value=\"analysis\" className=\"h-full m-0 p-4 overflow-auto\">
-                <QualityAnalysis 
-                  frames={frames}
-                  analysisResults={analysisResults}
-                  currentFrame={currentFrame}
-                  onFrameSelect={setCurrentFrame}
+              <TabsContent value="analysis" className="h-full m-0 p-4 overflow-auto">
+                <div className="space-y-6">
+                  <FrameAnalyzer
+                    shotId={shot.id}
+                    frames={frames.map(f => f.imageUrl)}
+                    scriptChecks={[
+                      "Are mathematical equations clearly visible and correct?",
+                      "Do vector arrows point in the correct direction?", 
+                      "Is the physics demonstration accurate to the script?",
+                      "Are visual elements properly aligned and positioned?"
+                    ]}
+                    onAnalysisComplete={(analysis) => {
+                      console.log('Frame analysis complete:', analysis)
+                    }}
+                  />
+                  
+                  <QADashboard
+                    shotId={shot.id}
+                    onTriggerCodeRevision={(issues) => {
+                      console.log('Triggering code revision for issues:', issues)
+                    }}
+                  />
+                  
+                  <AutoFixEngine
+                    shotId={shot.id}
+                    issues={currentFrameData?.issues?.map(i => i.description) || []}
+                    onRevisionComplete={(revision) => {
+                      console.log('Code revision complete:', revision)
+                    }}
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="metrics" className="h-full m-0 p-4 overflow-auto">
+                <QAMetricsView
+                  shotId={shot.id}
+                  onRefreshMetrics={() => {
+                    console.log('Refreshing QA metrics for shot:', shot.id)
+                  }}
                 />
               </TabsContent>
               
-              <TabsContent value=\"comparison\" className=\"h-full m-0\">
+              <TabsContent value="comparison" className="h-full m-0">
                 <ComparisonView 
                   frames={frames}
                   currentFrame={currentFrame}
