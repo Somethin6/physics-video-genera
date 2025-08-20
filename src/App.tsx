@@ -7,7 +7,7 @@ import ProjectDashboard from '@/components/ProjectDashboard'
 import ProjectCreation from '@/components/ProjectCreation'
 import SystemMonitor from '@/components/SystemMonitor'
 import PipelineSettings from '@/components/PipelineSettings'
-import RenderPreview from '@/components/RenderPreview'
+import AdvancedRenderPreview from '@/components/AdvancedRenderPreview'
 import QAAnalysisDashboard from '@/components/QAAnalysisDashboard'
 import { Project } from '@/lib/types'
 import { RenderSequence } from '@/lib/qa-types'
@@ -125,10 +125,42 @@ function App() {
           </TabsContent>
 
           <TabsContent value="qa-preview" className="space-y-6">
-            <RenderPreview
+            <AdvancedRenderPreview
               sequence={currentSequence || undefined}
               onUploadSequence={handleUploadSequence}
               onAnalyzeFrame={mockAnalyzeFrame}
+              onBatchAnalysis={async (startFrame, endFrame, config) => {
+                // Mock batch analysis implementation
+                console.log('Batch analyzing frames', startFrame, 'to', endFrame, 'with config:', config)
+                
+                // Simulate batch processing
+                for (let i = startFrame; i <= Math.min(endFrame, startFrame + config.batchSize - 1); i++) {
+                  await new Promise(resolve => setTimeout(resolve, 500)) // Simulate processing time
+                  await mockAnalyzeFrame(i)
+                }
+              }}
+              onCompareFrames={async (frameA, frameB) => {
+                // Mock frame comparison implementation
+                console.log('Comparing frames', frameA, 'and', frameB)
+                
+                return {
+                  frameA,
+                  frameB,
+                  ssimScore: 0.85 + Math.random() * 0.1, // Random SSIM between 0.85-0.95
+                  differences: [
+                    {
+                      type: 'changed' as const,
+                      region: { x: 100, y: 150, width: 200, height: 100 },
+                      description: 'Text content modified'
+                    },
+                    {
+                      type: 'added' as const,
+                      region: { x: 300, y: 200, width: 150, height: 75 },
+                      description: 'New mathematical expression'
+                    }
+                  ]
+                }
+              }}
             />
           </TabsContent>
 
