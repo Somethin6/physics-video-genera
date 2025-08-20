@@ -1,0 +1,114 @@
+{
+  "llm": {
+    "endpoint": "http://127.0.0.1:8080/v1",
+    "models": [
+      { 
+        "name": "gpt-neox-20b-q4", 
+        "provider": "llama.cpp", 
+        "context": 4096, 
+        "n_gpu_layers": 28,
+        "description": "GPT-NeoX-20B quantized for planning and script generation"
+      },
+      { 
+        "name": "mistral-7b-instruct-q5", 
+        "provider": "llama.cpp", 
+        "context": 8192, 
+        "n_gpu_layers": 35,
+        "description": "Mistral-7B for script criticism and refinement"
+      }
+    ],
+    "roles": {
+      "planner": "gpt-neox-20b-q4",
+      "script_critic": "mistral-7b-instruct-q5",
+      "code_generator": "gpt-neox-20b-q4"
+    },
+    "streaming": true,
+    "temperature": 0.7,
+    "max_tokens": 2048
+  },
+  "audio": {
+    "asr": "whisper.cpp",
+    "aligner": "mfa", 
+    "tts_scratch": "piper",
+    "sample_rate": 48000,
+    "channels": 2,
+    "loudness": { 
+      "I": -23, 
+      "LRA": 7, 
+      "TP": -1.0 
+    },
+    "formats": ["wav", "flac"]
+  },
+  "render": {
+    "fps": 30, 
+    "width": 1920, 
+    "height": 1080,
+    "device": "OPTIX",
+    "fallback_device": "CUDA", 
+    "preview_samples": 8, 
+    "final_samples": 128,
+    "tile_size": 256,
+    "memory_limit_gb": 8
+  },
+  "encoders": { 
+    "video": "h264_nvenc", 
+    "preset": "p7", 
+    "rc": "vbr_hq", 
+    "cq": 19, 
+    "look_ahead": 1, 
+    "spatial_aq": 1, 
+    "temporal_aq": 1,
+    "fallback": "libx264",
+    "fallback_preset": "medium"
+  },
+  "color": { 
+    "ocio_config": "config/ocio/config.ocio", 
+    "display": "Rec.709", 
+    "eotf": "BT.1886",
+    "working_space": "ACEScg",
+    "tags_required": ["bt709", "bt1886"]
+  },
+  "quality": {
+    "ssim_threshold": 0.9,
+    "motion_threshold": 0.3,
+    "text_legibility_threshold": 0.8,
+    "color_accuracy_threshold": 0.95,
+    "auto_retry": true,
+    "max_retries": 3
+  },
+  "workers": {
+    "blender": {
+      "executable": "blender",
+      "headless": true,
+      "max_instances": 2,
+      "timeout": 300,
+      "memory_limit_gb": 4
+    },
+    "manim": {
+      "renderer": "opengl",
+      "fallback_renderer": "cairo",
+      "max_instances": 4,
+      "timeout": 120,
+      "quality": "medium_quality"
+    },
+    "taichi": {
+      "arch": "gpu",
+      "fallback_arch": "cpu",
+      "max_instances": 2,
+      "timeout": 180
+    }
+  },
+  "pipeline": {
+    "max_concurrent": 3,
+    "retry_delay": 5,
+    "cleanup_after_hours": 24,
+    "cache_artifacts": true,
+    "cache_size_gb": 50
+  },
+  "telemetry": {
+    "prometheus_port": 9090,
+    "otel_endpoint": "http://localhost:4317",
+    "log_level": "INFO",
+    "metrics_interval": 10
+  }
+}

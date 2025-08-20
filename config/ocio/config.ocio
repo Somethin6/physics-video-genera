@@ -1,0 +1,117 @@
+ocio_profile_version: 2
+
+environment: {}
+search_path: ""
+
+family_separator: /
+# Default color space for images and content
+default_view_transform: AgX
+
+roles:
+  # Core roles for OCIO
+  aces_interchange: ACES2065-1
+  cie_xyz_d65_interchange: CIE-XYZ-D65
+  color_timing: ACEScct
+  compositing_log: ACEScct
+  data: Raw
+  default: sRGB
+  matte_paint: ACEScct
+  reference: ACES2065-1
+  scene_linear: ACEScg
+  texture_paint: sRGB
+
+file_rules:
+  - !<Rule> {name: Default, colorspace: default}
+
+displays:
+  sRGB:
+    - !<View> {name: Standard, view_transform: AgX, display_colorspace: sRGB}
+    - !<View> {name: AgX, view_transform: AgX, display_colorspace: sRGB}
+    - !<View> {name: Filmic, view_transform: Filmic, display_colorspace: sRGB}
+  
+  Rec.709:
+    - !<View> {name: Standard, view_transform: AgX, display_colorspace: Rec.709}
+    - !<View> {name: AgX, view_transform: AgX, display_colorspace: Rec.709}
+    - !<View> {name: BT.1886, view_transform: AgX, display_colorspace: Rec.709 BT.1886}
+
+active_displays: [sRGB, Rec.709]
+active_views: [Standard, AgX, Filmic]
+
+view_transforms:
+  - !<ViewTransform>
+    name: AgX
+    description: |
+      AgX view transform for natural image rendering
+    from_scene_reference: !<BuiltinTransform> {style: AgX_Log, direction: forward}
+
+  - !<ViewTransform>  
+    name: Filmic
+    description: |
+      Filmic view transform for cinematic look
+    from_scene_reference: !<BuiltinTransform> {style: Filmic_Log, direction: forward}
+
+display_colorspaces:
+  - !<ColorSpace>
+    name: sRGB
+    family: Display
+    encoding: sdr-video
+    isdata: false
+    allocation: uniform
+    from_scene_reference: !<BuiltinTransform> {style: ACES-OUTPUT - sRGB}
+
+  - !<ColorSpace>
+    name: Rec.709
+    family: Display  
+    encoding: sdr-video
+    isdata: false
+    allocation: uniform
+    from_scene_reference: !<BuiltinTransform> {style: ACES-OUTPUT - Rec.709}
+
+  - !<ColorSpace>
+    name: Rec.709 BT.1886
+    family: Display
+    encoding: sdr-video
+    isdata: false
+    allocation: uniform
+    from_scene_reference: !<BuiltinTransform> {style: ACES-OUTPUT - Rec.709 BT.1886}
+
+colorspaces:
+  - !<ColorSpace>
+    name: ACES2065-1
+    family: ACES
+    encoding: scene-linear
+    isdata: false
+    allocation: lg2
+    allocationvars: [-8.5, 5, 0.00390625]
+
+  - !<ColorSpace>
+    name: ACEScg
+    family: ACES
+    encoding: scene-linear
+    isdata: false
+    allocation: lg2
+    allocationvars: [-8.5, 5, 0.00390625]
+    from_scene_reference: !<BuiltinTransform> {style: ACES-AP0_to_ACES-AP1}
+
+  - !<ColorSpace>
+    name: ACEScct
+    family: ACES
+    encoding: log
+    isdata: false
+    allocation: uniform
+    from_scene_reference: !<BuiltinTransform> {style: ACES-AP0_to_ACES-AP1-CCT}
+
+  - !<ColorSpace>
+    name: sRGB
+    family: Input/sRGB
+    encoding: sdr-video
+    isdata: false
+    allocation: uniform
+    from_scene_reference: !<BuiltinTransform> {style: UTILITY - sRGB_to_Linear}
+
+  - !<ColorSpace>
+    name: Raw
+    family: Utility
+    encoding: data
+    isdata: true
+    allocation: uniform
