@@ -7,12 +7,24 @@ import ProjectDashboard from '@/components/ProjectDashboard'
 import ProjectCreation from '@/components/ProjectCreation'
 import SystemMonitor from '@/components/SystemMonitor'
 import PipelineSettings from '@/components/PipelineSettings'
+import RenderPreview from '@/components/RenderPreview'
+import QAAnalysisDashboard from '@/components/QAAnalysisDashboard'
 import { Project } from '@/lib/types'
+import { RenderSequence } from '@/lib/qa-types'
+import { 
+  mockRenderSequence, 
+  mockQAMetrics, 
+  generateMockFrameAnalyses,
+  mockAnalyzeFrame,
+  mockUploadSequence 
+} from '@/lib/mockQAData'
 
 function App() {
   const [projects, setProjects] = useKV<Project[]>("physics-video-projects", [])
   const [activeTab, setActiveTab] = useState("dashboard")
   const [showCreateProject, setShowCreateProject] = useState(false)
+  const [currentSequence, setCurrentSequence] = useKV<RenderSequence | null>("current-qa-sequence", mockRenderSequence)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
 
   const createProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'status' | 'progress'>) => {
     const newProject: Project = {
@@ -33,6 +45,26 @@ function App() {
     setProjects(current => [...current, newProject])
     setShowCreateProject(false)
     setActiveTab("dashboard")
+  }
+
+  const handleUploadSequence = async (files: FileList) => {
+    try {
+      const sequence = await mockUploadSequence(files)
+      setCurrentSequence(sequence)
+      setActiveTab("qa-preview")
+    } catch (error) {
+      console.error('Failed to upload sequence:', error)
+    }
+  }
+
+  const handleStartAnalysis = () => {
+    setIsAnalyzing(true)
+    // In a real implementation, this would start the analysis process
+  }
+
+  const handleStopAnalysis = () => {
+    setIsAnalyzing(false)
+    // In a real implementation, this would stop the analysis process
   }
 
   return (
@@ -62,8 +94,10 @@ function App() {
 
       <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="qa-analysis">QA Analysis</TabsTrigger>
+            <TabsTrigger value="qa-preview">Render Preview</TabsTrigger>
             <TabsTrigger value="system">System Monitor</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -77,6 +111,24 @@ function App() {
                 )
               }}
               onCreateProject={createProject}
+            />
+          </TabsContent>
+
+          <TabsContent value="qa-analysis" className="space-y-6">
+            <QAAnalysisDashboard
+              metrics={mockQAMetrics}
+              recentAnalyses={generateMockFrameAnalyses(20)}
+              isAnalyzing={isAnalyzing}
+              onStartAnalysis={handleStartAnalysis}
+              onStopAnalysis={handleStopAnalysis}
+            />
+          </TabsContent>
+
+          <TabsContent value="qa-preview" className="space-y-6">
+            <RenderPreview
+              sequence={currentSequence || undefined}
+              onUploadSequence={handleUploadSequence}
+              onAnalyzeFrame={mockAnalyzeFrame}
             />
           </TabsContent>
 
