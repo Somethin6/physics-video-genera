@@ -10,22 +10,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  Activity, 
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Cpu,
-  Database,
-  Eye,
-  HardDrive,
-  Monitor,
-  Thermometer,
-  Zap,
-  TrendingUp,
-  Shield,
-  Gauge
-} from '@phosphor-icons/react'
+import { Activity, AlertTriangle, CheckCircle, Cpu, Eye, Monitor, TrendingUp, Shield, Gauge } from 'lucide-react'
 
 interface SystemHealth {
   status: 'healthy' | 'degraded' | 'critical'

@@ -6,23 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Microscope, 
-  Eye, 
-  GitCompare, 
-  BarChart3, 
-  Cpu,
-  Download,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Film,
-  Zap
-} from '@phosphor-icons/react'
+import { Play, Pause, SkipBack, SkipForward, GitCompare, BarChart3, Cpu, Download, AlertTriangle, CheckCircle, Clock, Film, Zap } from 'lucide-react'
 import { RenderFrame, FrameIssue, Shot, QAResult } from '@/lib/types'
 
 interface ComprehensiveRenderPreviewProps {

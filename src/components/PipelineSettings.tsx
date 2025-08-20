@@ -9,18 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { useKV } from '@github/spark/hooks'
-import { 
-  Cpu, 
-  HardDrive, 
-  Activity, 
-  Eye,
-  Microphone,
-  VideoCamera,
-  Monitor,
-  Download,
-  CheckCircle,
-  AlertTriangle
-} from '@phosphor-icons/react'
+import { Cpu, HardDrive, Activity, Eye, Monitor, Download, CheckCircle, AlertTriangle } from 'lucide-react'
 
 interface PipelineSettings {
   llmModel: string

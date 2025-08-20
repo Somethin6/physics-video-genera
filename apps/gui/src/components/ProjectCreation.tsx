@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Cpu, HardDrive, Monitor } from '@phosphor-icons/react'
+import { Cpu, HardDrive, Monitor } from 'lucide-react'
 
 interface ProjectCreationProps {
   open: boolean

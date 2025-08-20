@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Play, Pause, Upload, Eye, AlertTriangle, CheckCircle, XCircle } from '@phosphor-icons/react'
+import { Play, Pause, Upload, Eye, CheckCircle, XCircle } from 'lucide-react'
 import { RenderSequence, FrameAnalysis } from '@/lib/qa-types'
 
 interface RenderPreviewProps {

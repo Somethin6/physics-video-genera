@@ -5,7 +5,7 @@ description = "Production-grade FastAPI orchestrator for physics video generatio
 authors = ["Physics Foundry <team@physics-foundry.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.11,<3.13"
 
 # Core API Framework
 fastapi = "^0.104.0"

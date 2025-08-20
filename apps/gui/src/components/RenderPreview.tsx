@@ -11,11 +11,7 @@ import { Slider } from '@/components/ui/slider'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  Play, Pause, Upload, Eye, AlertTriangle, CheckCircle, XCircle,
-  SkipForward, SkipBack, Target, Activity, TrendingUp, Zap,
-  ArrowsClockwise, ChartLine, Clock, Gauge, FileText, Layers
-} from '@phosphor-icons/react'
+import { Play, Pause, Upload, Eye, AlertTriangle, SkipForward, SkipBack, Target, Activity, Zap } from 'lucide-react'
 import { RenderSequence, FrameAnalysis, QAAnalysisConfig, FrameComparisonResult } from '@/lib/qa-types'
 
 type PreviewMode = 'basic' | 'enhanced' | 'frameQA' | 'comprehensive'

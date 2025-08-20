@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { Eye, Play, AlertTriangle, CheckCircle, XCircle, Clock } from '@phosphor-icons/react'
+import { Eye, Play, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { Project, QAIssue } from '@/lib/types'
 
 interface FrameQAViewerProps {

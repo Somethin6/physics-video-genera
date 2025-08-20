@@ -5,21 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { 
-  Play, 
-  Pause, 
-  ArrowsClockwise, 
-  Eye, 
-  FileText, 
-  VideoCamera,
-  Microphone,
-  CheckCircle,
-  Warning,
-  Clock,
-  Monitor,
-  FlaskConical,
-  AlertTriangle
-} from '@phosphor-icons/react'
+import { Play, Pause, Eye, FileText, CheckCircle, AlertTriangle, Clock, Monitor, FlaskConical, AlertTriangle } from 'lucide-react'
 import { Project, Shot } from '@/lib/types'
 import ProjectDetails from '@/components/ProjectDetails'
 import ComprehensiveRenderPreview from '@/components/ComprehensiveRenderPreview'
@@ -50,7 +36,7 @@ export default function ProjectDashboard({ projects, onUpdateProject, onCreatePr
   const getStatusIcon = (status: Project['status']) => {
     switch (status) {
       case 'completed': return <CheckCircle size={16} />
-      case 'error': return <Warning size={16} />
+      case 'error': return <AlertTriangle size={16} />
       case 'generating-outline':
       case 'generating-script': return <FileText size={16} />
       case 'rendering-shots': return <VideoCamera size={16} />

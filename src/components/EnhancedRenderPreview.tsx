@@ -6,23 +6,7 @@ import { Slider } from '@/components/ui/slider'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  Play, 
-  Pause, 
-  SkipForward, 
-  SkipBack, 
-  Upload,
-  Eye,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Zap,
-  TrendingUp,
-  Activity,
-  Target,
-  FileText,
-  Layers
-} from '@phosphor-icons/react'
+import { Play, Pause, SkipForward, SkipBack, Upload, Eye, AlertTriangle, CheckCircle, XCircle, Zap, TrendingUp, Activity, Target, FileText, Layers } from 'lucide-react'
 import { RenderSequence, FrameAnalysis, QAAnalysisConfig, FrameComparisonResult } from '@/lib/qa-types'
 
 interface EnhancedRenderPreviewProps {
