@@ -1,516 +1,288 @@
-import { useState, useEffect, useRef } from 'react'
+import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { Slider } from '@/components/ui/slider'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Eye,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Activity,
-  BarChart3,
-  Zap
-} from '@phosphor-icons/react'
-import { useRenderPreview, generateMockFrames, analyzeOpticalFlow } from '@/lib/renderAnalysis'
-import { RenderFrame, FrameIssue } from '@/lib/types'
+import { Progress } from '@/components/ui/progress'
+import { Eye, Play, Pause, RotateCcw, Download } from '@phosphor-icons/react'
+import { Shot, Frame, QAReport } from '@/lib/types'
 
 interface RenderPreviewProps {
-  projectId: string
-  shotId: string
-  onClose?: () => void
+  shot: Shot
+  frames: Frame[]
+  qaReport?: QAReport
+  onRetryShot: (shotId: string) => void
+  onApproveShot: (shotId: string) => void
 }
 
-export default function RenderPreview({ projectId, shotId, onClose }: RenderPreviewProps) {
-  const {
-    frames,
-    setFrames,
-    currentFrame,
-    setCurrentFrame,
-    analysisResults,
-    isAnalyzing,
-    analyzeCurrentFrame,
-    analyzeAllFrames
-  } = useRenderPreview(shotId)
+const RenderPreview: React.FC<RenderPreviewProps> = ({
+  shot,
+  frames,
+  qaReport,
+  onRetryShot,
+  onApproveShot
+}) => {
+  const [currentFrame, setCurrentFrame] = React.useState(0)
+  const [isPlaying, setIsPlaying] = React.useState(false)
+  const [selectedFrame, setSelectedFrame] = React.useState<Frame | null>(null)
 
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [playbackRate, setPlaybackRate] = useState(30) // FPS
-  const [analysisMode, setAnalysisMode] = useState<'overview' | 'detailed' | 'metrics'>('overview')
-  const intervalRef = useRef<NodeJS.Timeout>()
+  // Auto-advance frames when playing
+  React.useEffect(() => {
+    if (!isPlaying || frames.length === 0) return
 
-  // Initialize mock frames if none exist
-  useEffect(() => {
-    if (frames.length === 0) {
-      const mockFrames = generateMockFrames(shotId, 90)
-      setFrames(mockFrames)
-    }
-  }, [shotId, frames.length, setFrames])
+    const interval = setInterval(() => {
+      setCurrentFrame(prev => (prev + 1) % frames.length)
+    }, 1000 / 24) // 24fps playback
 
-  // Playback control
-  useEffect(() => {
-    if (isPlaying && frames.length > 0) {
-      intervalRef.current = setInterval(() => {
-        setCurrentFrame(current => {
-          const next = current + 1
-          if (next >= frames.length) {
-            setIsPlaying(false)
-            return current
-          }
-          return next
-        })
-      }, 1000 / playbackRate)
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
+    return () => clearInterval(interval)
+  }, [isPlaying, frames.length])
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [isPlaying, playbackRate, frames.length, setCurrentFrame])
-
-  const getCurrentFrame = (): RenderFrame | null => {
-    return frames[currentFrame] || null
-  }
-
-  const getFrameIssues = (frame: RenderFrame): FrameIssue[] => {
-    return frame.issues || []
-  }
-
-  const getQualityColor = (score: number): string => {
-    if (score >= 0.9) return 'text-green-600'
-    if (score >= 0.7) return 'text-yellow-600'
-    return 'text-red-600'
-  }
-
-  const getQualityBadge = (score: number) => {
-    if (score >= 0.9) return <Badge variant="default" className="bg-green-100 text-green-800">Excellent</Badge>
-    if (score >= 0.7) return <Badge variant="default" className="bg-yellow-100 text-yellow-800">Good</Badge>
-    return <Badge variant="destructive">Needs Review</Badge>
-  }
-
-  const getSeverityColor = (severity: string): string => {
-    switch (severity) {
-      case 'critical': return 'text-red-700'
-      case 'high': return 'text-red-600'
-      case 'medium': return 'text-yellow-600'
-      case 'low': return 'text-blue-600'
-      default: return 'text-gray-600'
+  const getStatusColor = (status: Shot['status']) => {
+    switch (status) {
+      case 'passed': return 'bg-green-500'
+      case 'failed': return 'bg-red-500'
+      case 'qa': return 'bg-yellow-500'
+      case 'rendering': return 'bg-blue-500'
+      case 'retrying': return 'bg-orange-500'
+      default: return 'bg-gray-500'
     }
   }
 
-  const frame = getCurrentFrame()
-  const frameIssues = frame ? getFrameIssues(frame) : []
-  const overallScore = analysisResults.length > 0 ? analysisResults[analysisResults.length - 1]?.overallScore : 0
-  const analyzedFrames = frames.filter(f => f.qaScore !== undefined).length
-  const opticalFlowData = frames.length > 10 ? analyzeOpticalFlow(frames.slice(0, 30)) : null
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
 
   return (
-    <div className="fixed inset-0 bg-background z-50 overflow-hidden">
-      <div className="h-full flex flex-col">
-        {/* Header */}
-        <div className="border-b border-border bg-card px-6 py-4">
+    <div className="space-y-6">
+      {/* Shot Header */}
+      <Card>
+        <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-card-foreground">Render Preview & QA Analysis</h2>
-              <p className="text-sm text-muted-foreground">Shot {shotId} • {frames.length} frames</p>
+              <CardTitle className="flex items-center gap-3">
+                Shot {shot.sequence}: {shot.title}
+                <Badge className={`${getStatusColor(shot.status)} text-white`}>
+                  {shot.status}
+                </Badge>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {shot.renderer} • {formatDuration(shot.duration)} • {frames.length} frames
+              </p>
             </div>
-            <div className="flex items-center gap-3">
-              {isAnalyzing && (
-                <div className="flex items-center gap-2 text-blue-600">
-                  <Activity className="animate-spin" size={16} />
-                  <span className="text-sm">Analyzing...</span>
-                </div>
-              )}
+            <div className="flex items-center gap-2">
               <Button
-                onClick={analyzeCurrentFrame}
-                disabled={!frame || isAnalyzing}
                 variant="outline"
                 size="sm"
+                onClick={() => setIsPlaying(!isPlaying)}
+                disabled={frames.length === 0}
               >
-                <Eye size={16} />
-                Analyze Frame
+                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
               </Button>
               <Button
-                onClick={analyzeAllFrames}
-                disabled={frames.length === 0 || isAnalyzing}
                 variant="outline"
                 size="sm"
+                onClick={() => onRetryShot(shot.id)}
+                disabled={shot.status === 'rendering'}
               >
-                <BarChart3 size={16} />
-                Analyze All
+                <RotateCcw size={16} />
               </Button>
-              {onClose && (
-                <Button onClick={onClose} variant="outline" size="sm">
-                  Close
-                </Button>
-              )}
             </div>
           </div>
-        </div>
+        </CardHeader>
+      </Card>
 
-        <div className="flex-1 flex overflow-hidden">
-          {/* Main Preview Area */}
-          <div className="flex-1 flex flex-col">
-            {/* Frame Display */}
-            <div className="flex-1 bg-black relative flex items-center justify-center">
-              {frame ? (
-                <div className="relative max-w-full max-h-full">
-                  <div 
-                    className="bg-gray-800 rounded"
-                    style={{ aspectRatio: '16/9', width: '80vw', maxWidth: '800px' }}
-                  >
-                    <div className="w-full h-full flex items-center justify-center text-white">
-                      Frame {currentFrame + 1}: {frame.metadata.renderer}
-                      <br />
-                      {frame.metadata.resolution.width}×{frame.metadata.resolution.height}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Preview */}
+        <div className="lg:col-span-2 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Frame Preview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {frames.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                    <img
+                      src={frames[currentFrame]?.imagePath || '/placeholder-frame.png'}
+                      alt={`Frame ${currentFrame + 1}`}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Frame {currentFrame + 1} of {frames.length}</span>
+                      <span>{formatDuration(frames[currentFrame]?.timestamp || 0)}</span>
                     </div>
+                    <Progress value={(currentFrame / (frames.length - 1)) * 100} />
                   </div>
-                  
-                  {/* Issue overlays */}
-                  {frameIssues.map((issue) => (
-                    issue.region && (
-                      <div
-                        key={issue.id}
-                        className="absolute border-2 border-red-500 bg-red-500 bg-opacity-20"
-                        style={{
-                          left: `${(issue.region.x / 1920) * 100}%`,
-                          top: `${(issue.region.y / 1080) * 100}%`,
-                          width: `${(issue.region.width / 1920) * 100}%`,
-                          height: `${(issue.region.height / 1080) * 100}%`
-                        }}
-                        title={issue.description}
-                      />
-                    )
-                  ))}
-                </div>
-              ) : (
-                <div className="text-white">No frame selected</div>
-              )}
-            </div>
 
-            {/* Playback Controls */}
-            <div className="bg-card border-t border-border p-4">
-              <div className="space-y-4">
-                {/* Timeline */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Frame {currentFrame + 1} of {frames.length}</span>
-                    <span>{((currentFrame / 30) || 0).toFixed(2)}s</span>
-                  </div>
-                  <Slider
-                    value={[currentFrame]}
-                    onValueChange={([value]) => setCurrentFrame(value)}
-                    max={frames.length - 1}
-                    step={1}
-                    className="w-full"
-                  />
-                  
-                  {/* QA Score indicators on timeline */}
-                  <div className="relative h-2 bg-muted rounded">
-                    {frames.map((f, idx) => (
-                      f.qaScore !== undefined && (
-                        <div
-                          key={f.id}
-                          className={`absolute top-0 h-full w-1 rounded ${
-                            f.qaScore >= 0.9 ? 'bg-green-500' :
-                            f.qaScore >= 0.7 ? 'bg-yellow-500' : 'bg-red-500'
-                          }`}
-                          style={{ left: `${(idx / frames.length) * 100}%` }}
+                  {/* Frame Selection Strip */}
+                  <div className="flex gap-1 overflow-x-auto py-2">
+                    {frames.map((frame, index) => (
+                      <button
+                        key={frame.id}
+                        onClick={() => setCurrentFrame(index)}
+                        className={`flex-shrink-0 w-16 h-12 rounded border-2 overflow-hidden ${
+                          index === currentFrame 
+                            ? 'border-accent' 
+                            : 'border-border hover:border-muted-foreground'
+                        }`}
+                      >
+                        <img
+                          src={frame.thumbnailPath || frame.imagePath}
+                          alt={`Frame ${index + 1}`}
+                          className="w-full h-full object-cover"
                         />
-                      )
+                      </button>
                     ))}
                   </div>
                 </div>
-
-                {/* Controls */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => setCurrentFrame(Math.max(0, currentFrame - 1))}
-                      disabled={currentFrame === 0}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <SkipBack size={16} />
-                    </Button>
-                    
-                    <Button
-                      onClick={() => setIsPlaying(!isPlaying)}
-                      disabled={frames.length === 0}
-                      variant="outline"
-                      size="sm"
-                    >
-                      {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-                    </Button>
-                    
-                    <Button
-                      onClick={() => setCurrentFrame(Math.min(frames.length - 1, currentFrame + 1))}
-                      disabled={currentFrame === frames.length - 1}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <SkipForward size={16} />
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">FPS:</span>
-                      <Slider
-                        value={[playbackRate]}
-                        onValueChange={([value]) => setPlaybackRate(value)}
-                        min={1}
-                        max={60}
-                        step={1}
-                        className="w-20"
-                      />
-                      <span className="text-sm min-w-8">{playbackRate}</span>
-                    </div>
-                  </div>
+              ) : (
+                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                  <p className="text-muted-foreground">No frames rendered yet</p>
                 </div>
-              </div>
-            </div>
-          </div>
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Analysis Panel */}
-          <div className="w-80 border-l border-border bg-card flex flex-col">
-            <div className="p-4 border-b border-border">
-              <Tabs value={analysisMode} onValueChange={setAnalysisMode as any}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="detailed">Issues</TabsTrigger>
-                  <TabsTrigger value="metrics">Metrics</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
+          {/* Script Content */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Script</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed">{shot.script}</p>
+            </CardContent>
+          </Card>
+        </div>
 
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
-                <Tabs value={analysisMode}>
-                  <TabsContent value="overview" className="space-y-4">
-                    {/* Overall Stats */}
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Overall Quality</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
+        {/* QA Panel */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Eye size={20} />
+                Quality Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {qaReport ? (
+                <>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">Overall Score</span>
+                      <span className="text-lg font-bold">{Math.round(qaReport.overallScore * 100)}%</span>
+                    </div>
+                    <Progress value={qaReport.overallScore * 100} />
+                  </div>
+
+                  <div className="space-y-3">
+                    {qaReport.checks.map((check, index) => (
+                      <div key={index} className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Score:</span>
-                          <div className="flex items-center gap-2">
-                            <span className={`font-mono ${getQualityColor(overallScore)}`}>
-                              {(overallScore * 100).toFixed(1)}%
-                            </span>
-                            {getQualityBadge(overallScore)}
-                          </div>
+                          <span className="text-sm capitalize">{check.type.replace('_', ' ')}</span>
+                          <Badge variant={check.passed ? 'default' : 'destructive'}>
+                            {check.passed ? 'Pass' : 'Fail'}
+                          </Badge>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Analyzed:</span>
-                          <span className="text-sm text-muted-foreground">
-                            {analyzedFrames}/{frames.length}
-                          </span>
-                        </div>
-                        <Progress value={(analyzedFrames / frames.length) * 100} />
-                      </CardContent>
-                    </Card>
-
-                    {/* Current Frame */}
-                    {frame && (
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Current Frame</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Quality:</span>
-                            {frame.qaScore !== undefined ? (
-                              <span className={`font-mono ${getQualityColor(frame.qaScore)}`}>
-                                {(frame.qaScore * 100).toFixed(1)}%
-                              </span>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">Not analyzed</span>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Issues:</span>
-                            <div className="flex items-center gap-1">
-                              {frameIssues.length === 0 ? (
-                                <CheckCircle size={16} className="text-green-600" />
-                              ) : (
-                                <div className="flex items-center gap-1">
-                                  <AlertTriangle size={16} className="text-yellow-600" />
-                                  <span className="text-sm">{frameIssues.length}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Renderer:</span>
-                            <Badge variant="outline">{frame.metadata.renderer}</Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {/* Quick Actions */}
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Quick Analysis</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <Button 
-                          onClick={analyzeCurrentFrame}
-                          disabled={!frame || isAnalyzing}
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full"
-                        >
-                          <Eye size={14} />
-                          Analyze Current
-                        </Button>
-                        <Button 
-                          onClick={analyzeAllFrames}
-                          disabled={frames.length === 0 || isAnalyzing}
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full"
-                        >
-                          <BarChart3 size={14} />
-                          Full Analysis
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-
-                  <TabsContent value="detailed" className="space-y-4">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Frame Issues</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {frameIssues.length === 0 ? (
-                          <div className="text-center py-6 text-muted-foreground">
-                            <CheckCircle size={32} className="mx-auto mb-2 text-green-600" />
-                            <p className="text-sm">No issues detected</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {frameIssues.map((issue) => (
-                              <div key={issue.id} className="border rounded p-3 space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <Badge 
-                                    variant={issue.severity === 'critical' || issue.severity === 'high' ? 'destructive' : 'outline'}
-                                    className="capitalize"
-                                  >
-                                    {issue.severity}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {(issue.confidence * 100).toFixed(0)}% confident
-                                  </span>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">{issue.description}</p>
-                                  <p className="text-xs text-muted-foreground mt-1">{issue.suggestion}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-xs">
-                                    {issue.type.replace('_', ' ')}
-                                  </Badge>
-                                  {issue.region && (
-                                    <span className="text-xs text-muted-foreground">
-                                      Region: {issue.region.x},{issue.region.y}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                        <Progress value={check.score * 100} />
+                        {check.details && (
+                          <p className="text-xs text-muted-foreground">{check.details}</p>
                         )}
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
+                      </div>
+                    ))}
+                  </div>
 
-                  <TabsContent value="metrics" className="space-y-4">
-                    {/* Optical Flow */}
-                    {opticalFlowData && (
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <Zap size={16} />
-                            Motion Analysis
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Smoothness:</span>
-                            <span className="font-mono text-sm">
-                              {(opticalFlowData.smoothness * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Consistency:</span>
-                            <span className="font-mono text-sm">
-                              {(opticalFlowData.consistency * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                          {opticalFlowData.issues.length > 0 && (
-                            <div className="space-y-1">
-                              <span className="text-sm text-muted-foreground">Issues:</span>
-                              {opticalFlowData.issues.map((issue, idx) => (
-                                <p key={idx} className="text-xs text-yellow-600">{issue}</p>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                  {qaReport.llavaAnalysis && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">AI Vision Analysis</h4>
+                      <p className="text-xs text-muted-foreground">{qaReport.llavaAnalysis.response}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs">Confidence:</span>
+                        <Progress value={qaReport.llavaAnalysis.confidence * 100} className="flex-1" />
+                        <span className="text-xs">{Math.round(qaReport.llavaAnalysis.confidence * 100)}%</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {qaReport.signalAnalysis && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Signal Analysis</h4>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>SSIM: {qaReport.signalAnalysis.ssim.toFixed(3)}</div>
+                        <div>Flow: {qaReport.signalAnalysis.opticalFlow.toFixed(3)}</div>
+                        <div>Motion: {qaReport.signalAnalysis.motionContinuity.toFixed(3)}</div>
+                        <div>Stability: {qaReport.signalAnalysis.frameStability.toFixed(3)}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    {qaReport.recommendation === 'pass' ? (
+                      <Button 
+                        onClick={() => onApproveShot(shot.id)}
+                        className="flex-1"
+                        size="sm"
+                      >
+                        Approve
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="destructive"
+                        onClick={() => onRetryShot(shot.id)}
+                        className="flex-1"
+                        size="sm"
+                      >
+                        Retry
+                      </Button>
                     )}
+                  </div>
+                </>
+              ) : shot.status === 'qa' ? (
+                <div className="text-center text-muted-foreground">
+                  <Eye size={24} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Running quality analysis...</p>
+                </div>
+              ) : (
+                <div className="text-center text-muted-foreground">
+                  <p className="text-sm">QA analysis will appear after rendering</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                    {/* Analysis History */}
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Analysis History</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {analysisResults.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">No analysis completed yet</p>
-                        ) : (
-                          <div className="space-y-2">
-                            {analysisResults.slice(-3).map((result) => (
-                              <div key={result.id} className="border rounded p-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs text-muted-foreground">
-                                    {new Date(result.completedAt).toLocaleTimeString()}
-                                  </span>
-                                  <span className="text-xs font-mono">
-                                    {(result.overallScore * 100).toFixed(1)}%
-                                  </span>
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {result.passedFrames}/{result.frameCount} frames passed
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
+          {/* Render Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Render Info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Engine:</span>
+                <span className="font-mono">{shot.renderer}</span>
               </div>
-            </ScrollArea>
-          </div>
+              <div className="flex justify-between">
+                <span>Attempts:</span>
+                <span>{shot.attempts}/{shot.maxAttempts}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Duration:</span>
+                <span>{formatDuration(shot.duration)}</span>
+              </div>
+              {shot.renderPath && (
+                <Button variant="outline" size="sm" className="w-full gap-2">
+                  <Download size={16} />
+                  Download Render
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   )
 }
+
+export default RenderPreview

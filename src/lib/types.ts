@@ -2,10 +2,9 @@ export interface Project {
   id: string
   title: string
   topic: string
-  duration: number
-  description?: string
+  duration: number // in minutes
   createdAt: string
-  status: 'initializing' | 'planning' | 'scripting' | 'rendering' | 'qa' | 'completed' | 'error'
+  status: 'initializing' | 'outlining' | 'scripting' | 'rendering' | 'qa' | 'assembling' | 'completed' | 'failed'
   progress: {
     outline: number
     script: number
@@ -14,12 +13,9 @@ export interface Project {
     qa: number
     assembly: number
   }
-  settings?: {
-    quality: 'draft' | 'standard' | 'high'
-    renderer: 'auto' | 'manim' | 'blender' | 'taichi'
-    resolution: '720p' | '1080p' | '4k'
-  }
-  shots?: Shot[]
+  description?: string
+  targetAudience?: string
+  complexity?: 'beginner' | 'intermediate' | 'advanced'
 }
 
 export interface Shot {
@@ -27,81 +23,106 @@ export interface Shot {
   projectId: string
   sequence: number
   title: string
-  description: string
+  script: string
   duration: number
-  status: 'planning' | 'scripting' | 'rendering' | 'qa' | 'approved' | 'error'
   renderer: 'manim' | 'blender' | 'taichi' | 'matplotlib'
-  frames?: RenderFrame[]
-  qaResults?: QAResult[]
-  createdAt: string
-  updatedAt: string
+  status: 'pending' | 'rendering' | 'qa' | 'passed' | 'failed' | 'retrying'
+  attempts: number
+  maxAttempts: number
+  frames: Frame[]
+  qaReport?: QAReport
+  otioPath?: string
+  renderPath?: string
 }
 
-export interface RenderFrame {
+export interface Frame {
   id: string
   shotId: string
   frameNumber: number
   timestamp: number
   imagePath: string
-  thumbnail: string
-  status: 'rendering' | 'completed' | 'error' | 'analyzing'
+  thumbnailPath: string
+  qaChecked: boolean
   qaScore?: number
-  issues?: FrameIssue[]
-  metadata: {
-    renderTime: number
-    resolution: { width: number; height: number }
-    renderer: string
-    settings: Record<string, any>
-  }
+  qaIssues: string[]
 }
 
-export interface FrameIssue {
-  id: string
-  frameId: string
-  type: 'physics_accuracy' | 'visual_clarity' | 'composition' | 'technical' | 'continuity'
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  description: string
-  suggestion: string
-  region?: {
-    x: number
-    y: number
-    width: number
-    height: number
-  }
-  confidence: number
-  detectedAt: string
-}
-
-export interface QAResult {
+export interface QAReport {
   id: string
   shotId: string
+  timestamp: string
   overallScore: number
-  frameCount: number
-  passedFrames: number
-  issues: FrameIssue[]
-  analysisType: 'vision_llm' | 'ssim' | 'optical_flow' | 'composite'
-  completedAt: string
-  processingTime: number
+  checks: QACheck[]
+  llavaAnalysis?: LLaVAAnalysis
+  signalAnalysis?: SignalAnalysis
+  recommendation: 'pass' | 'retry' | 'manual_review'
+  fixes?: string[]
 }
 
-export interface RenderPreview {
-  id: string
-  projectId: string
-  shotId: string
-  frames: RenderFrame[]
-  currentFrame: number
-  playbackRate: number
-  analysisMode: 'overview' | 'detailed' | 'comparison'
-  filters: {
-    issueTypes: string[]
-    severity: string[]
-    confidence: number
+export interface QACheck {
+  type: 'physics_accuracy' | 'visual_clarity' | 'timing' | 'continuity' | 'math_notation'
+  passed: boolean
+  score: number
+  description: string
+  details?: string
+}
+
+export interface LLaVAAnalysis {
+  prompt: string
+  response: string
+  confidence: number
+  physicsElements: string[]
+  visualElements: string[]
+  issues: string[]
+}
+
+export interface SignalAnalysis {
+  ssim: number
+  opticalFlow: number
+  motionContinuity: number
+  frameStability: number
+  issues: string[]
+}
+
+export interface RenderEngine {
+  name: 'manim' | 'blender' | 'taichi' | 'matplotlib'
+  status: 'idle' | 'busy' | 'error'
+  currentShot?: string
+  queueLength: number
+  avgRenderTime: number
+  lastActivity: string
+}
+
+export interface SystemStatus {
+  cpu: number
+  memory: number
+  gpu: number
+  gpuMemory: number
+  temperature: number
+  renderEngines: RenderEngine[]
+  llmStatus: {
+    model: string
+    status: 'idle' | 'busy' | 'error'
+    tokensPerSecond: number
+    memoryUsage: number
+  }
+  llavaStatus: {
+    model: string
+    status: 'idle' | 'busy' | 'error'
+    lastAnalysis: string
   }
 }
 
-export interface ComparisonView {
-  referenceFrame: RenderFrame
-  currentFrame: RenderFrame
-  diffHighlight: boolean
-  syncedScrubbing: boolean
+export interface PipelineSettings {
+  llmModel: string
+  llavaModel: string
+  renderQuality: 'draft' | 'preview' | 'final'
+  maxRetries: number
+  qaThreshold: number
+  enableOptiX: boolean
+  enableCUDA: boolean
+  outputFormat: 'mp4' | 'mov' | 'avi'
+  videoCodec: 'h264_nvenc' | 'hevc_nvenc' | 'libx264'
+  audioCodec: 'aac' | 'flac'
+  framerate: 24 | 30 | 60
 }
