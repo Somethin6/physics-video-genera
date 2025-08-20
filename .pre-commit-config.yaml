@@ -1,0 +1,56 @@
+# Physics Foundry - Pre-commit Configuration
+# Ensures code quality and prevents bad commits
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: mixed-line-ending
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.8
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.1
+    hooks:
+      - id: mypy
+        files: ^apps/orchestrator/
+        additional_dependencies: 
+          - fastapi
+          - pydantic
+          - types-requests
+
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.0.0
+    hooks:
+      - id: eslint
+        files: ^apps/gui/
+        additional_dependencies:
+          - "@typescript-eslint/eslint-plugin"
+          - "@typescript-eslint/parser"
+
+  - repo: local
+    hooks:
+      - id: poetry-check
+        name: poetry-check
+        entry: poetry check
+        language: system
+        files: pyproject\.toml$
+        pass_filenames: false
+        
+      - id: test-build
+        name: test-build
+        entry: npm run build --workspace=apps/gui
+        language: system
+        files: ^apps/gui/
+        pass_filenames: false

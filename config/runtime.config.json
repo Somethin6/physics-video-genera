@@ -7,6 +7,7 @@
         "provider": "llama.cpp", 
         "context": 4096, 
         "n_gpu_layers": 28,
+        "gpu_memory_usage": "~8GB",
         "description": "GPT-NeoX-20B quantized for planning and script generation"
       },
       { 
@@ -14,6 +15,7 @@
         "provider": "llama.cpp", 
         "context": 8192, 
         "n_gpu_layers": 35,
+        "gpu_memory_usage": "~6GB", 
         "description": "Mistral-7B for script criticism and refinement"
       }
     ],
@@ -24,7 +26,12 @@
     },
     "streaming": true,
     "temperature": 0.7,
-    "max_tokens": 2048
+    "max_tokens": 2048,
+    "gpu_constraints": {
+      "vram_limit": "11GB",
+      "fallback_to_cpu_kv": true,
+      "partial_offload_threshold": 0.9
+    }
   },
   "audio": {
     "asr": "whisper.cpp",
@@ -109,6 +116,51 @@
     "prometheus_port": 9090,
     "otel_endpoint": "http://localhost:4317",
     "log_level": "INFO",
-    "metrics_interval": 10
+    "metrics_interval": 10,
+    "tracing": {
+      "enabled": true,
+      "jaeger_endpoint": "http://localhost:14268/api/traces",
+      "sample_rate": 0.1
+    },
+    "sentry": {
+      "enabled": false,
+      "dsn": "${SENTRY_DSN}",
+      "environment": "development"
+    }
+  },
+  "sandbox": {
+    "enabled": true,
+    "type": "firejail",
+    "max_concurrent": 3,
+    "timeout": 60,
+    "memory_limit": "512M",
+    "cpu_cores": 2,
+    "network_isolation": true,
+    "allowed_modules": [
+      "numpy", "math", "random", "typing", "datetime",
+      "manim", "taichi", "bpy", "pathlib", "os"
+    ],
+    "blocked_syscalls": ["execve", "fork", "clone", "socket", "connect"]
+  },
+  "observability": {
+    "frame_analysis": {
+      "enabled": true,
+      "ssim_threshold": 0.85,
+      "psnr_threshold": 30.0,
+      "vmaf_threshold": 70.0,
+      "text_legibility_threshold": 0.80
+    },
+    "system_monitoring": {
+      "gpu_stats": true,
+      "cpu_stats": true,
+      "memory_stats": true,
+      "process_stats": true,
+      "interval_seconds": 2
+    },
+    "error_tracking": {
+      "structured_errors": true,
+      "auto_remediation": true,
+      "breadcrumbs": true
+    }
   }
 }
