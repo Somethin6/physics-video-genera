@@ -15,10 +15,10 @@ import FrameAnalyzer from '@/components/FrameAnalyzer'
 import QADashboard from '@/components/QADashboard'
 import AutoFixEngine from '@/components/AutoFixEngine'
 import QAMetricsView from '@/components/QAMetricsView'
-import RenderQAEngine from '@/components/RenderQAEngine'
+import RenderQASystem from '@/components/RenderQASystem'
 import FrameQAInspector from '@/components/FrameQAInspector'
 import FrameByFrameQAEngine from '@/components/FrameByFrameQAEngine'
-import QASummaryDashboard from '@/components/QASummaryDashboard'
+import QADashboard from '@/components/QADashboard'
 
 interface RenderPreviewSystemProps {
   shot: Shot
@@ -193,18 +193,7 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
               
               <TabsContent value="metrics" className="h-full m-0 p-4 overflow-auto">
                 <div className="space-y-6">
-                  <QASummaryDashboard
-                    frames={frames}
-                    qaResults={qaResults}
-                    onExportReport={() => {
-                      console.log('Exporting QA report for shot:', shot.id)
-                      // Generate and download comprehensive QA report
-                    }}
-                    onRetryFailedFrames={() => {
-                      console.log('Retrying failed frames for shot:', shot.id)
-                      // Re-render frames that failed QA checks
-                    }}
-                  />
+                  <QADashboard shotId={shot.id} />
                   
                   <QAMetricsView
                     shotId={shot.id}
@@ -253,10 +242,17 @@ export default function RenderPreviewSystem({ shot, onClose }: RenderPreviewSyst
                     }}
                   />
                   
-                  <RenderQAEngine
-                    shotId={shot.id}
-                    onAnalysisComplete={(results) => {
-                      console.log('Vision QA analysis complete:', results)
+                  <RenderQASystem
+                    shot={shot}
+                    frames={frames}
+                    onRunQA={(frameId) => {
+                      console.log('Running QA for frame:', frameId)
+                    }}
+                    onApproveShot={() => {
+                      console.log('Shot approved')
+                    }}
+                    onRetryShot={() => {
+                      console.log('Retrying shot')
                     }}
                   />
                 </div>

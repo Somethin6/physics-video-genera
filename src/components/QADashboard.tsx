@@ -16,7 +16,7 @@ import {
   Target,
   Zap
 } from '@phosphor-icons/react'
-import FrameQAAnalysis from '@/components/FrameQAAnalysis'
+import FrameQAInspector from '@/components/FrameQAInspector'
 import LLaVAAnalysis from '@/components/LLaVAAnalysis'
 import SignalAnalysis from '@/components/SignalAnalysis'
 import { useRenderPreview } from '@/lib/renderAnalysis'
@@ -304,7 +304,7 @@ export default function QADashboard({ shotId }: QADashboardProps) {
         </TabsList>
 
         <TabsContent value="frame" className="mt-6">
-          <FrameQAAnalysis 
+          <FrameQAInspector 
             shotId={shotId}
             onAnalysisComplete={(result) => {
               console.log('Frame analysis completed:', result)

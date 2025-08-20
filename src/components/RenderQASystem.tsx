@@ -15,7 +15,7 @@ import {
   Pause
 } from '@phosphor-icons/react'
 import { Shot, Frame, QAReport } from '@/lib/types'
-import FrameAnalysis from './FrameAnalysis'
+import FrameAnalyzer from './FrameAnalyzer'
 import QAAnalysis from './QAAnalysis'
 
 interface RenderQASystemProps {
@@ -64,10 +64,18 @@ const RenderQASystem: React.FC<RenderQASystemProps> = ({
         >
           ← Back to Overview
         </Button>
-        <FrameAnalysis
-          frame={selectedFrame}
-          onRunLLaVAAnalysis={(frameId) => handleFrameAnalysis(frameId, 'llava')}
-          onRunSignalAnalysis={(frameId) => handleFrameAnalysis(frameId, 'signal')}
+        <FrameAnalyzer
+          shotId={shot.id}
+          frames={frames.map(f => f.imagePath)}
+          scriptChecks={[
+            "Are mathematical equations correctly rendered?",
+            "Are physics concepts accurately represented?",
+            "Is the visual hierarchy clear and appropriate?"
+          ]}
+          onAnalysisComplete={(analysis) => {
+            console.log('Frame analysis complete:', analysis)
+            // Handle analysis results
+          }}
         />
       </div>
     )

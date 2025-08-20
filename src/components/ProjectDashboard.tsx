@@ -20,7 +20,7 @@ import {
 } from '@phosphor-icons/react'
 import { Project, Shot } from '@/lib/types'
 import ProjectDetails from '@/components/ProjectDetails'
-import RenderPreviewSystem from '@/components/RenderPreviewSystem'
+import ComprehensiveRenderPreview from '@/components/ComprehensiveRenderPreview'
 import QADashboard from '@/components/QADashboard'
 import QAInstructions from '@/components/QAInstructions'
 
@@ -99,7 +99,7 @@ export default function ProjectDashboard({ projects, onUpdateProject, onCreatePr
     }
 
     return (
-      <RenderPreviewSystem 
+      <ComprehensiveRenderPreview 
         shot={mockShot}
         onClose={() => setPreviewShot(null)}
       />
