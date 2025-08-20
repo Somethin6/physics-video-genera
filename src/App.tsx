@@ -9,8 +9,12 @@ import SystemMonitor from '@/components/SystemMonitor'
 import PipelineSettings from '@/components/PipelineSettings'
 import AdvancedRenderPreview from '@/components/AdvancedRenderPreview'
 import QAAnalysisDashboard from '@/components/QAAnalysisDashboard'
+import PipelineMonitor from '@/components/PipelineMonitor'
+import LiveCodeWorkspace from '@/components/LiveCodeWorkspace'
+import AudioAlignmentWorkspace from '@/components/AudioAlignmentWorkspace'
 import { Project } from '@/lib/types'
 import { RenderSequence } from '@/lib/qa-types'
+import { PhysicsVideoRequest } from '@/lib/pipeline-orchestrator'
 import { 
   mockRenderSequence, 
   mockQAMetrics, 
@@ -25,6 +29,7 @@ function App() {
   const [showCreateProject, setShowCreateProject] = useState(false)
   const [currentSequence, setCurrentSequence] = useKV<RenderSequence | null>("current-qa-sequence", mockRenderSequence)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [currentRequest, setCurrentRequest] = useState<PhysicsVideoRequest | null>(null)
 
   const createProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'status' | 'progress'>) => {
     const newProject: Project = {
@@ -44,7 +49,21 @@ function App() {
 
     setProjects(current => [...current, newProject])
     setShowCreateProject(false)
-    setActiveTab("dashboard")
+    
+    // Create pipeline request from project data
+    const request: PhysicsVideoRequest = {
+      topic: projectData.topic,
+      duration: projectData.duration,
+      level: 'intermediate', // Default level
+      style: {
+        colorTheme: 'scientific',
+        fontStack: ['Inter', 'JetBrains Mono'],
+        motionVocabulary: 'smooth'
+      }
+    }
+    
+    setCurrentRequest(request)
+    setActiveTab("pipeline")
   }
 
   const handleUploadSequence = async (files: FileList) => {
@@ -94,12 +113,14 @@ function App() {
 
       <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="pipeline">Live Pipeline</TabsTrigger>
+            <TabsTrigger value="code">Code Workspace</TabsTrigger>
+            <TabsTrigger value="audio">Audio Sync</TabsTrigger>
             <TabsTrigger value="qa-analysis">QA Analysis</TabsTrigger>
             <TabsTrigger value="qa-preview">Render Preview</TabsTrigger>
             <TabsTrigger value="system">System Monitor</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -111,6 +132,35 @@ function App() {
                 )
               }}
               onCreateProject={createProject}
+            />
+          </TabsContent>
+
+          <TabsContent value="pipeline" className="space-y-6">
+            <PipelineMonitor 
+              request={currentRequest || undefined}
+              onComplete={(videoPath) => {
+                console.log('Video generation complete:', videoPath)
+                setActiveTab("qa-preview")
+              }}
+            />
+          </TabsContent>
+
+          <TabsContent value="code" className="space-y-6">
+            <LiveCodeWorkspace 
+              onCodeUpdate={(sceneId, code) => {
+                console.log('Code updated for scene:', sceneId)
+              }}
+              onRenderRequest={(sceneId) => {
+                console.log('Render requested for scene:', sceneId)
+              }}
+            />
+          </TabsContent>
+
+          <TabsContent value="audio" className="space-y-6">
+            <AudioAlignmentWorkspace 
+              onAlignmentComplete={(alignments) => {
+                console.log('Alignment complete:', alignments)
+              }}
             />
           </TabsContent>
 
@@ -166,10 +216,6 @@ function App() {
 
           <TabsContent value="system" className="space-y-6">
             <SystemMonitor />
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
-            <PipelineSettings />
           </TabsContent>
         </Tabs>
       </main>
