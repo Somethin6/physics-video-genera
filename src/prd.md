@@ -1,129 +1,104 @@
-# Physics Video Pipeline - Render Preview System
+# Physics Video Pipeline - Product Requirements Document
 
 ## Core Purpose & Success
 
-**Mission Statement**: A comprehensive frame-by-frame quality analysis system that automatically reviews rendered physics videos using local AI models, ensuring professional-grade visual accuracy and educational clarity.
+**Mission Statement**: A fully local, AI-driven physics video production system that transforms topic + duration into broadcast-quality educational content with frame-perfect visual analysis and quality assurance.
 
 **Success Indicators**: 
-- 95%+ automated detection of physics inaccuracies
-- 90%+ reduction in manual review time
-- Frame-perfect synchronization with voiceover timing
-- Zero false positives on mathematical notation
+- Zero external dependencies (local LLM, rendering, alignment)
+- Deterministic, reproducible outputs with seeded generation
+- Automated QA with frame-by-frame analysis and self-correction
+- Sub-minute render preview generation for iterative feedback
 
-**Experience Qualities**: Precise, Intelligent, Reliable
+**Experience Qualities**: Precise, Intelligent, Self-Improving
 
 ## Project Classification & Approach
 
-**Complexity Level**: Complex Application (advanced functionality with AI integration, local processing)
+**Complexity Level**: Complex Application (advanced functionality with AI orchestration, render pipeline management, quality assurance systems)
 
-**Primary User Activity**: Interacting (analyzing, reviewing, and approving rendered physics content)
+**Primary User Activity**: Creating (physics video content with automated QA analysis)
 
 ## Essential Features
 
-### Frame-by-Frame Analysis Engine
-- **Functionality**: Automatically analyzes each rendered frame using LLaVA vision model and signal processing
-- **Purpose**: Ensures physics concepts are accurately visualized and mathematically correct
-- **Success Criteria**: Identifies issues with 95% accuracy without human intervention
+### Frame-by-Frame QA Analysis System
+- **What it does**: Analyzes each rendered frame for visual quality, equation legibility, timing accuracy, and motion continuity using computer vision and OCR
+- **Why it matters**: Ensures production-quality output without manual review, catching rendering errors and visual inconsistencies automatically
+- **Success criteria**: 95%+ accuracy in detecting visual defects, equation readability issues, and timing misalignments
 
-### Real-time Preview System
-- **Functionality**: Provides interactive playback with frame-level quality annotations
-- **Purpose**: Enables rapid iteration and quality validation during the render process
-- **Success Criteria**: Sub-100ms frame switching, synchronized quality indicators
+### LLM-Driven Self-Correction
+- **What it does**: Uses local NeoX-20B model to interpret QA analysis results and generate specific code fixes for detected issues
+- **Why it matters**: Eliminates manual debugging and enables true "lights-out" video production
+- **Success criteria**: Successfully resolves 80%+ of detected issues without human intervention
 
-### AI-Powered Quality Assessment
-- **Functionality**: Uses local GPT-NeoX-20B and LLaVA models for semantic physics analysis
-- **Purpose**: Validates educational content accuracy and visual clarity
-- **Success Criteria**: Catches physics errors that humans might miss
+### Multi-Engine Rendering Coordination
+- **What it does**: Orchestrates Manim, Blender, and Taichi renders based on content requirements with unified quality standards
+- **Why it matters**: Leverages each engine's strengths while maintaining visual consistency across shots
+- **Success criteria**: Seamless visual continuity between different rendering engines
 
 ## Design Direction
 
 ### Visual Tone & Identity
-**Emotional Response**: Users should feel confident in the AI's analytical capabilities while maintaining full control over final decisions.
-
-**Design Personality**: Professional, precise, and scientifically rigorous. The interface should feel like advanced laboratory equipment - sophisticated but approachable.
-
-**Visual Metaphors**: Scientific instrumentation (microscopes, oscilloscopes), precision measurement tools, and academic review interfaces.
+**Emotional Response**: Confidence in automation, trust in AI-driven quality assurance
+**Design Personality**: Technical precision with intelligent automation
+**Visual Metaphors**: Neural network patterns, render progress visualization, quality metrics dashboards
 
 ### Color Strategy
-**Color Scheme Type**: Analogous (blue-focused scientific palette)
-
-**Primary Color**: Deep scientific blue (#1e40af) - conveying precision and analytical depth
-
-**Secondary Colors**: 
-- Analysis green (#059669) for passed checks
-- Warning amber (#d97706) for potential issues  
-- Critical red (#dc2626) for failures
-
-**Accent Color**: Electric blue (#3b82f6) for interactive elements and highlights
+**Color Scheme Type**: Analogous (deep blues to teals with accent orange)
+**Primary Color**: Deep blue-gray (`oklch(0.35 0.15 230)`) - represents technical precision
+**Secondary Colors**: Dark backgrounds (`oklch(0.25 0.02 230)`) for professional video editing interface feel
+**Accent Color**: Bright orange (`oklch(0.65 0.18 45)`) - draws attention to critical QA alerts and progress states
+**Foreground/Background Pairings**:
+- Light text (`oklch(0.95 0.02 230)`) on dark backgrounds for video editing aesthetic
+- Dark text (`oklch(0.25 0.02 230)`) on light backgrounds for data readability
+- High contrast ratios (>7:1) for accessibility
 
 ### Typography System
-**Font Pairing Strategy**: JetBrains Mono for code/data display, Inter for interface text
+**Font Pairing Strategy**: Technical monospace for data/metrics, clean sans-serif for interface
+**Which fonts**: Inter (interface) + JetBrains Mono (code/metrics) - already configured
+**Typographic Hierarchy**: Clear distinction between render data, QA metrics, and interface controls
+**Legibility Check**: Optimized for technical data display and long monitoring sessions
 
-**Typographic Hierarchy**: 
-- Large (24px+): Analysis results and frame numbers
-- Medium (16-20px): Section headers and controls
-- Small (14px): Detailed metrics and descriptions
-- Code (14px mono): Technical data and file paths
+### Visual Hierarchy & Layout
+**Attention Direction**: QA alerts and render progress take priority, followed by project management
+**Grid System**: Dense information layout similar to video editing software
+**Responsive Approach**: Desktop-first with detailed metrics panels
 
-**Typography Consistency**: Consistent spacing and alignment that mirrors scientific documentation standards
-
-### Component Selection
-**Primary Components**: 
-- Tabbed analysis panels (Tabs)
-- Progress indicators for analysis status (Progress)
-- Status badges for quality indicators (Badge)
-- Interactive frame scrubber (Slider)
-- Modal overlays for detailed analysis (Dialog)
-
-**Component Hierarchy**: 
-- Primary: Analysis results and frame navigation
-- Secondary: Control panels and settings
-- Tertiary: Metadata and technical details
+### UI Elements & Component Selection
+**Component Usage**: Cards for project status, Tables for render metrics, Progress bars for pipeline stages, Badges for QA status
+**Component States**: Clear visual distinction between idle, processing, warning, and error states
+**Icon Selection**: Technical icons emphasizing analysis, rendering, and quality assurance
 
 ## Implementation Considerations
 
-### Local AI Integration
-- GPT-NeoX-20B GGUF model for semantic analysis
-- LLaVA vision model for frame content understanding
-- CUDA acceleration on RTX 2080 Ti
-- Efficient layer offloading to manage 11GB VRAM constraint
+### Technical Architecture
+- Local LLM integration via Spark runtime API
+- Frame analysis using computer vision libraries
+- Real-time render monitoring with WebSocket connections
+- Modular QA analysis pipeline for extensibility
 
-### Performance Optimization
-- Frame caching for smooth playback
-- Progressive loading of analysis results
-- Background processing for non-blocking UI
-- Optimized image compression for thumbnails
+### Performance Requirements
+- Sub-second QA analysis response times
+- Efficient frame sampling for large render sequences
+- Minimal overhead during active rendering
 
-### Quality Control Pipeline
-- SSIM analysis for visual stability
-- Optical flow validation for motion continuity
-- OCR verification for mathematical notation
-- Physics accuracy validation through LLM analysis
+### Quality Assurance Framework
+- SSIM-based frame comparison
+- OCR-based equation legibility checking
+- Motion continuity analysis via optical flow
+- Audio synchronization validation
 
 ## Edge Cases & Problem Scenarios
 
-**Potential Obstacles**:
-- GPU memory exhaustion during analysis
-- False positives in complex mathematical visualizations
-- Network delays affecting local model responses
-- Frame corruption or missing render output
+**Potential Obstacles**: 
+- Hardware resource contention during analysis
+- False positive QA alerts
+- LLM hallucination in fix generation
 
-**Technical Constraints**:
-- 11GB VRAM limit requires careful memory management
-- Local processing means no cloud fallback options
-- Real-time requirements limit analysis depth per frame
+**Technical Constraints**: 
+- Local compute limitations
+- Frame analysis accuracy vs speed tradeoffs
+- Memory usage during batch analysis
 
-## Accessibility & Readability
-
-**Contrast Goal**: WCAG AA compliance (4.5:1) minimum for all text elements, with enhanced contrast for critical alerts and data displays.
-
-**Foreground/Background Pairings**:
-- Primary text (--foreground: oklch(0.25 0.02 230)) on background (--background: oklch(0.95 0.02 230)) - 18.7:1 ratio
-- Card text (--card-foreground: oklch(0.95 0.02 230)) on card (--card: oklch(0.25 0.02 230)) - 18.7:1 ratio  
-- Accent text (--accent-foreground: oklch(0.95 0.02 230)) on accent (--accent: oklch(0.65 0.18 45)) - 7.2:1 ratio
-
-## Reflection
-
-This render preview system uniquely combines computer vision AI with physics domain expertise to automate quality assurance for educational content. The local-first approach ensures privacy and eliminates dependency on external services, while the real-time analysis provides immediate feedback for iterative improvement.
-
-The system's strength lies in its multi-modal analysis approach - combining signal processing metrics with semantic understanding through vision models. This creates a robust quality gate that can catch both technical rendering issues and conceptual physics errors.
+**Critical Questions**: 
+- How to handle conflicting QA feedback from different analysis methods?
+- What's the optimal frame sampling rate for comprehensive quality assessment?

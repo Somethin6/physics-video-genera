@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
   Play, 
   Pause, 
@@ -16,12 +17,13 @@ import {
   Warning,
   Clock,
   Monitor,
-  FlaskConical
+  FlaskConical,
+  AlertTriangle
 } from '@phosphor-icons/react'
 import { Project, Shot } from '@/lib/types'
 import ProjectDetails from '@/components/ProjectDetails'
 import ComprehensiveRenderPreview from '@/components/ComprehensiveRenderPreview'
-import QADashboard from '@/components/QADashboard'
+import FrameQAViewer from '@/components/FrameQAViewer'
 import QAInstructions from '@/components/QAInstructions'
 
 interface ProjectDashboardProps {
@@ -33,6 +35,8 @@ interface ProjectDashboardProps {
 export default function ProjectDashboard({ projects, onUpdateProject, onCreateProject }: ProjectDashboardProps) {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [previewShot, setPreviewShot] = useState<{ projectId: string; shotId: string } | null>(null)
+  const [showQAViewer, setShowQAViewer] = useState(false)
+  const [qaProject, setQaProject] = useState<Project | null>(null)
 
   const getStatusColor = (status: Project['status']) => {
     switch (status) {
@@ -65,6 +69,11 @@ export default function ProjectDashboard({ projects, onUpdateProject, onCreatePr
 
   const activeProjects = projects.filter(p => !['completed', 'error'].includes(p.status))
   const completedProjects = projects.filter(p => p.status === 'completed')
+
+  const openQAViewer = (project: Project) => {
+    setQaProject(project)
+    setShowQAViewer(true)
+  }
 
   const createDemoProject = () => {
     if (!onCreateProject) return
@@ -213,6 +222,12 @@ export default function ProjectDashboard({ projects, onUpdateProject, onCreatePr
                         <Badge variant="outline" className="text-xs">
                           {project.duration}m
                         </Badge>
+                        {project.qaAnalysis && project.qaAnalysis.issues.length > 0 && (
+                          <Badge variant="destructive" className="gap-1 text-xs">
+                            <AlertTriangle size={10} />
+                            {project.qaAnalysis.issues.length}
+                          </Badge>
+                        )}
                         <div className={`h-2 w-2 rounded-full ${getStatusColor(project.status)}`} />
                       </div>
                     </div>
@@ -259,6 +274,14 @@ export default function ProjectDashboard({ projects, onUpdateProject, onCreatePr
                       <Button 
                         size="sm" 
                         variant="outline"
+                        onClick={() => openQAViewer(project)}
+                        title="QA Analysis"
+                      >
+                        <Eye size={14} />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
                         onClick={() => setPreviewShot({ projectId: project.id, shotId: 'S001' })}
                         title="Quick Preview"
                       >
@@ -266,9 +289,6 @@ export default function ProjectDashboard({ projects, onUpdateProject, onCreatePr
                       </Button>
                       <Button size="sm" variant="outline">
                         <Pause size={14} />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <ArrowsClockwise size={14} />
                       </Button>
                     </div>
                   </CardContent>
@@ -356,6 +376,26 @@ export default function ProjectDashboard({ projects, onUpdateProject, onCreatePr
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* QA Viewer Dialog */}
+      <Dialog open={showQAViewer} onOpenChange={setShowQAViewer}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Frame QA Analysis - {qaProject?.title}
+            </DialogTitle>
+          </DialogHeader>
+          {qaProject && (
+            <FrameQAViewer 
+              project={qaProject}
+              onUpdateProject={(updatedProject) => {
+                onUpdateProject(updatedProject)
+                setQaProject(updatedProject)
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

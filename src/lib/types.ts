@@ -2,20 +2,77 @@ export interface Project {
   id: string
   title: string
   topic: string
-  duration: number // in minutes
+  duration: number
   createdAt: string
-  status: 'initializing' | 'outlining' | 'scripting' | 'rendering' | 'qa' | 'assembling' | 'completed' | 'failed'
-  progress: {
-    outline: number
-    script: number
-    shots: number
-    renders: number
-    qa: number
-    assembly: number
-  }
-  description?: string
-  targetAudience?: string
-  complexity?: 'beginner' | 'intermediate' | 'advanced'
+  status: ProjectStatus
+  progress: ProjectProgress
+  qaAnalysis?: QAAnalysis
+  renderSettings?: RenderSettings
+}
+
+export type ProjectStatus = 
+  | 'initializing'
+  | 'outlining' 
+  | 'scripting'
+  | 'rendering'
+  | 'qa-analysis'
+  | 'fixing'
+  | 'completed'
+  | 'error'
+
+export interface ProjectProgress {
+  outline: number
+  script: number
+  shots: number
+  renders: number
+  qa: number
+  assembly: number
+}
+
+export interface QAAnalysis {
+  frameCount: number
+  analyzedFrames: number
+  issues: QAIssue[]
+  overallScore: number
+  lastAnalyzed: string
+  metrics: QAMetrics
+}
+
+export interface QAIssue {
+  id: string
+  type: QAIssueType
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  frameNumber: number
+  timestamp: number
+  description: string
+  suggestedFix?: string
+  status: 'detected' | 'analyzing' | 'fixing' | 'resolved' | 'ignored'
+}
+
+export type QAIssueType = 
+  | 'visual-quality'
+  | 'equation-legibility' 
+  | 'motion-continuity'
+  | 'timing-sync'
+  | 'color-consistency'
+  | 'text-overlap'
+  | 'audio-sync'
+
+export interface QAMetrics {
+  visualQuality: number
+  equationLegibility: number
+  motionContinuity: number
+  timingAccuracy: number
+  overallScore: number
+}
+
+export interface RenderSettings {
+  engine: 'manim' | 'blender' | 'taichi'
+  resolution: string
+  frameRate: number
+  quality: 'preview' | 'final'
+  samples?: number
+  useOptiX: boolean
 }
 
 export interface Shot {
@@ -23,157 +80,40 @@ export interface Shot {
   projectId: string
   sequence: number
   title: string
-  script: string
   duration: number
-  renderer: 'manim' | 'blender' | 'taichi' | 'matplotlib'
-  status: 'pending' | 'rendering' | 'qa' | 'passed' | 'failed' | 'retrying'
-  attempts: number
-  maxAttempts: number
-  frames: Frame[]
-  qaReport?: QAReport
-  otioPath?: string
+  engine: 'manim' | 'blender' | 'taichi'
+  status: ShotStatus
   renderPath?: string
+  qaAnalysis?: QAAnalysis
+  issues: QAIssue[]
 }
 
-export interface Frame {
-  id: string
-  shotId: string
+export type ShotStatus = 
+  | 'queued'
+  | 'rendering' 
+  | 'analyzing'
+  | 'complete'
+  | 'failed'
+  | 'fixing'
+
+export interface FrameAnalysis {
   frameNumber: number
   timestamp: number
-  imagePath: string
-  thumbnailPath: string
-  qaChecked: boolean
-  qaScore?: number
-  qaIssues: string[]
+  visualQuality: number
+  detectedIssues: QAIssue[]
+  ocrResults?: OCRResult[]
+  motionVector?: MotionData
 }
 
-export interface QAReport {
-  id: string
-  shotId: string
-  timestamp: string
-  overallScore: number
-  checks: QACheck[]
-  llavaAnalysis?: LLaVAAnalysis
-  signalAnalysis?: SignalAnalysis
-  recommendation: 'pass' | 'retry' | 'manual_review'
-  fixes?: string[]
-}
-
-export interface QACheck {
-  type: 'physics_accuracy' | 'visual_clarity' | 'timing' | 'continuity' | 'math_notation'
-  passed: boolean
-  score: number
-  description: string
-  details?: string
-}
-
-export interface LLaVAAnalysis {
-  prompt: string
-  response: string
+export interface OCRResult {
+  text: string
   confidence: number
-  physicsElements: string[]
-  visualElements: string[]
-  issues: string[]
+  bbox: [number, number, number, number]
+  legible: boolean
 }
 
-export interface SignalAnalysis {
-  ssim: number
-  opticalFlow: number
-  motionContinuity: number
-  frameStability: number
-  issues: string[]
-}
-
-export interface QAResult {
-  id: string
-  shotId: string
-  overallScore: number
-  frameCount: number
-  passedFrames: number
-  issues: FrameIssue[]
-  analysisType: 'vision_llm' | 'signal_analysis' | 'hybrid'
-  completedAt: string
-  processingTime: number
-}
-
-export interface RenderFrame {
-  id: string
-  shotId: string
-  frameNumber: number
-  timestamp: number
-  imagePath: string
-  thumbnail: string
-  status: 'rendering' | 'completed' | 'failed'
-  qaScore?: number
-  issues?: FrameIssue[]
-  metadata: {
-    renderTime: number
-    resolution: { width: number; height: number }
-    renderer: string
-    settings: {
-      samples: number
-      denoiser: string
-      colorSpace: string
-    }
-  }
-}
-
-export interface FrameIssue {
-  id: string
-  frameId: string
-  type: 'physics_accuracy' | 'visual_clarity' | 'timing' | 'continuity' | 'math_notation' | 'analysis_error'
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  description: string
-  suggestion: string
-  region?: {
-    x: number
-    y: number
-    width: number
-    height: number
-  }
-  confidence: number
-  detectedAt: string
-}
-
-export interface RenderEngine {
-  name: 'manim' | 'blender' | 'taichi' | 'matplotlib'
-  status: 'idle' | 'busy' | 'error'
-  currentShot?: string
-  queueLength: number
-  avgRenderTime: number
-  lastActivity: string
-}
-
-export interface SystemStatus {
-  cpu: number
-  memory: number
-  gpu: number
-  gpuMemory: number
-  temperature: number
-  renderEngines: RenderEngine[]
-  llmStatus: {
-    model: string
-    status: 'idle' | 'busy' | 'error'
-    tokensPerSecond: number
-    memoryUsage: number
-  }
-  llavaStatus: {
-    model: string
-    status: 'idle' | 'busy' | 'error'
-    lastAnalysis: string
-  }
-}
-
-export interface PipelineSettings {
-  llmModel: string
-  llavaModel: string
-  renderQuality: 'draft' | 'preview' | 'final'
-  maxRetries: number
-  qaThreshold: number
-  enableOptiX: boolean
-  enableCUDA: boolean
-  outputFormat: 'mp4' | 'mov' | 'avi'
-  videoCodec: 'h264_nvenc' | 'hevc_nvenc' | 'libx264'
-  audioCodec: 'aac' | 'flac'
-  framerate: 24 | 30 | 60
+export interface MotionData {
+  magnitude: number
+  direction: number
+  continuity: number
 }
