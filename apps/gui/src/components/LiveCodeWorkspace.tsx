@@ -9,16 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { 
-  Code, 
-  Eye, 
-  GitBranch, 
-  Play, 
-  Lock, 
-  Unlock,
-  RefreshCw,
-  Download
-} from '@phosphor-icons/react'
+import { Code, Eye, GitBranch, Play, Lock, Unlock, RefreshCw, Download } from 'lucide-react'
 
 interface CodeRevision {
   id: string

@@ -1,15 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Eye, 
-  Activity, 
-  BarChart3, 
-  Lightbulb,
-  Cpu,
-  Monitor,
-  Zap
-} from '@phosphor-icons/react'
+import { Eye, Activity, BarChart3, Lightbulb, Cpu, Monitor, Zap } from 'lucide-react'
 
 export default function QAInstructions() {
   return (

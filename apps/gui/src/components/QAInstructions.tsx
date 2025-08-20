@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CheckCircle, AlertTriangle, Info, Zap, Book, Settings } from '@phosphor-icons/react'
+import { CheckCircle, AlertTriangle, Info, Zap, Book, Settings } from 'lucide-react'
 
 interface QAInstructionsProps {
   issues?: Array<{

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Play, Pause, Download, Upload, Eye, CheckCircle, Warning, Code } from '@phosphor-icons/react'
+import { ArrowLeft, Play, Pause, Download, Upload, Eye, CheckCircle, AlertTriangle, Code } from 'lucide-react'
 import { Project, Shot } from '@/lib/types'
 
 interface ProjectDetailsProps {
@@ -83,7 +83,7 @@ export default function ProjectDetails({ project, onBack, onUpdateProject, onOpe
   const getStatusIcon = (status: Shot['status']) => {
     switch (status) {
       case 'approved': return <CheckCircle size={16} />
-      case 'failed': return <Warning size={16} />
+      case 'failed': return <AlertTriangle size={16} />
       case 'qa-review': return <Eye size={16} />
       case 'rendering': return <Play size={16} />
       default: return <Pause size={16} />
@@ -196,7 +196,7 @@ export default function ProjectDetails({ project, onBack, onUpdateProject, onOpe
             <Card className="border-red-200 bg-red-50">
               <CardHeader>
                 <CardTitle className="text-red-600 flex items-center gap-2">
-                  <Warning size={16} />
+                  <AlertTriangle size={16} />
                   Pipeline Error
                 </CardTitle>
               </CardHeader>

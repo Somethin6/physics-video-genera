@@ -3,16 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Cpu, 
-  HardDrive, 
-  Thermometer, 
-  Monitor,
-  Lightning,
-  Database,
-  Activity,
-  ArrowsClockwise
-} from '@phosphor-icons/react'
+import { Cpu, HardDrive, Thermometer, Monitor, Lightning, Database, Activity } from 'lucide-react'
 import { SystemMetrics } from '@/lib/types'
 
 export default function SystemMonitor() {

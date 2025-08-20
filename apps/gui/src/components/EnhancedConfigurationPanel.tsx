@@ -13,17 +13,7 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Settings,
-  Shield,
-  Monitor,
-  Zap,
-  Database,
-  Eye,
-  CheckCircle,
-  AlertTriangle,
-  Info
-} from '@phosphor-icons/react'
+import { Settings, Shield, Monitor, Zap, Database, Eye, CheckCircle, AlertTriangle, Info } from 'lucide-react'
 
 interface ConfigurationState {
   llm: {
@@ -300,7 +290,7 @@ export default function EnhancedConfigurationPanel() {
             <Alert className="border-yellow-200 bg-yellow-50">
               <AlertTriangle className="h-4 w-4 text-yellow-600" />
               <AlertDescription>
-                <div className="font-medium text-yellow-800 mb-1">Warnings:</div>
+                <div className="font-medium text-yellow-800 mb-1">AlertTriangles:</div>
                 <ul className="text-yellow-700 text-sm space-y-1">
                   {validation.warnings.map((warning, index) => (
                     <li key={index}>• {warning}</li>

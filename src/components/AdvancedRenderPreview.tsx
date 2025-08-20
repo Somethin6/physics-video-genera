@@ -9,10 +9,7 @@ import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
-import { 
-  Play, Pause, Upload, Eye, AlertTriangle, CheckCircle, XCircle, 
-  ArrowsClockwise, ChartLine, Target, Clock, Gauge
-} from '@phosphor-icons/react'
+import { Play, Pause, Upload, Eye, AlertTriangle, CheckCircle, XCircle, ChartLine, Target, Clock, Gauge } from 'lucide-react'
 import { RenderSequence, FrameAnalysis, QAAnalysisConfig, FrameComparisonResult } from '@/lib/qa-types'
 
 interface AdvancedRenderPreviewProps {

@@ -4,16 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Play, 
-  Pause, 
-  Activity, 
-  TrendUp, 
-  AlertTriangle, 
-  CheckCircle,
-  Eye,
-  BarChart
-} from '@phosphor-icons/react'
+import { Play, Pause, Activity, TrendUp, AlertTriangle, CheckCircle, BarChart } from 'lucide-react'
 import { OverallQAMetrics, FrameAnalysis } from '@/lib/qa-types'
 
 interface QAAnalysisDashboardProps {
