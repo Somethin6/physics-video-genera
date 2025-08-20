@@ -26,8 +26,13 @@ dist-ssr
 
 .env
 **/agent-eval-report*
-packages
 .file-manifest
 .devcontainer/
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
 
 .spark-workbench-id

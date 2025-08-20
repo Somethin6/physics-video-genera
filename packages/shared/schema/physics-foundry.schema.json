@@ -1,0 +1,53 @@
+{
+  "title": "Physics Foundry Schema Definitions",
+  "description": "JSON Schema definitions for the Physics Foundry video generation pipeline",
+  "version": "0.2.0",
+  "schemas": {
+    "project": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "topic": { "type": "string" },
+        "duration": { "type": "number" },
+        "level": { 
+          "type": "string",
+          "enum": ["beginner", "intermediate", "advanced"]
+        },
+        "status": {
+          "type": "string", 
+          "enum": ["created", "in_progress", "completed", "failed"]
+        },
+        "progress": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "required": ["id", "title", "topic", "level"]
+    },
+    "pipeline_status": {
+      "type": "object",
+      "properties": {
+        "pipeline_id": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["planning", "scripting", "rendering", "assembling", "complete", "error"]
+        },
+        "progress": { "type": "number", "minimum": 0, "maximum": 1 },
+        "current_operation": { "type": "string" },
+        "estimated_completion": { "type": "string", "format": "date-time" }
+      },
+      "required": ["pipeline_id", "status", "progress"]
+    },
+    "quality_metrics": {
+      "type": "object", 
+      "properties": {
+        "overall_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ssim": { "type": "number", "minimum": 0, "maximum": 1 },
+        "psnr": { "type": "number" },
+        "vmaf": { "type": "number", "minimum": 0, "maximum": 100 },
+        "motion_stability": { "type": "number", "minimum": 0, "maximum": 1 },
+        "text_legibility": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "required": ["overall_score", "ssim"]
+    }
+  }
+}
