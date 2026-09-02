@@ -1,72 +1,66 @@
 # Physics Foundry
 
-Local-first research prototype for orchestrating AI-assisted physics visualization workflows.
+Local-first prototype for AI-assisted physics animation and rendering workflows.
 
-Physics Foundry explores a modular pipeline for turning a physics prompt into a structured scene plan, renderer-specific code, generated media, and quality-analysis artifacts. The repository combines a React/Tauri-facing application with a Python FastAPI orchestration service and shared schemas for renderer and pipeline state.
+Physics Foundry explores a modular pipeline for turning a bounded physics prompt into structured scene plans, generated animation code, renderer jobs, quality checks, and reviewable artifacts. The repository contains substantial application and orchestration scaffolding, but the full autonomous multi-engine pipeline is **not presented as production-ready**.
 
-> **Status:** active prototype. Core API, WebSocket, schema, monitoring, and orchestration scaffolding are implemented. Several downstream generation/render stages are still mocked, simulated, or incomplete. This repository should be read as a software-architecture and research prototype, not as a finished autonomous production system.
+> **Current state:** active prototype. See [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md), [`docs/CLAIMS.md`](docs/CLAIMS.md), and [`docs/PORTFOLIO_ROADMAP.md`](docs/PORTFOLIO_ROADMAP.md) for the implementation ledger and the next reproducible milestone.
 
 ## What is implemented
 
-- FastAPI orchestration service with REST endpoints and WebSocket progress events
-- typed request/response models and shared pipeline state
-- health/status endpoints and background task orchestration
-- Prometheus-compatible metrics and observability hooks
-- GPU/system monitoring hooks
-- sandbox/execution interfaces for generated renderer code
-- React/Tauri-oriented frontend structure
-- renderer/plugin abstractions for Manim, Taichi, and Blender-style workflows
-- configuration for local OpenAI-compatible LLM servers such as llama.cpp
+- React/Tauri-oriented GUI scaffolding under `apps/gui/`
+- FastAPI orchestration service under `apps/orchestrator/`
+- REST and WebSocket interfaces for jobs and progress events
+- Pydantic/typed request and artifact models
+- Renderer/plugin interfaces for Manim, Taichi, and Blender-oriented workers
+- Prometheus/OpenTelemetry-oriented observability hooks
+- Configuration, sandbox, quality-gate, and development tooling
 
 ## What is still experimental
 
-- fully autonomous prompt-to-video execution
-- reliable multi-engine renderer selection
-- complete Manim/Taichi/Blender execution across all paths
-- automatic scene repair/remediation
-- production audio alignment and final assembly
-- production deployment and operational hardening
+The central prompt-to-video workflow is not yet a fully verified production pipeline. Several stages remain prototype implementations or interfaces, including portions of automated planning, generated-script execution, multi-engine rendering, remediation, assembly, and audio alignment.
 
-The current orchestrator contains placeholder/simulated stages in parts of the pipeline. Those paths are intentionally treated as prototype scaffolding until they are replaced by reproducible renderer execution and end-to-end tests.
+The current P0 milestone is intentionally narrower:
+
+```text
+bounded prompt
+    -> schema-valid scene plan
+    -> runnable Manim source
+    -> sandboxed execution
+    -> rendered MP4
+    -> real quality check
+    -> persisted artifacts + logs
+```
+
+When that path is reproducible from a clean checkout, it becomes the reference portfolio example. See issue #17.
 
 ## Architecture
 
 ```text
-physics-foundry/
-├── apps/
-│   ├── gui/                    # React / Tauri-facing UI
-│   └── orchestrator/           # FastAPI orchestration service
-├── packages/
-│   ├── shared/                 # shared schemas and generated types
-│   └── plugins/                # renderer/plugin abstractions
-├── config/                     # runtime and model configuration
-├── docs/                       # architecture / operations notes
-└── scripts/                    # local development utilities
+apps/gui
+   |
+   v
+FastAPI / WebSocket orchestrator
+   |
+   +--> planning / typed scene representation
+   |
+   +--> sandbox + renderer interfaces
+   |       +--> Manim
+   |       +--> Taichi (experimental)
+   |       +--> Blender (experimental)
+   |
+   +--> quality / artifact tracking
+   |
+   +--> observability
 ```
 
-The intended research path is:
+The design goal is to keep planning, rendering, validation, and artifact management separable so individual stages can be tested and replaced independently.
 
-```text
-physics prompt
-    ↓
-structured scene specification
-    ↓
-renderer-specific code
-    ↓
-sandboxed execution
-    ↓
-rendered artifact
-    ↓
-quality analysis / diagnostics
-```
+## Development
 
-The repository is currently strongest in the orchestration, interface, monitoring, and software-architecture layers. Completing one reproducible end-to-end renderer path is the next major milestone.
+The repository includes project-specific setup and development tooling. The exact commands depend on which GUI, local-model, and renderer dependencies are installed.
 
-## Local development
-
-The project has multiple runtime dependencies. Exact setup depends on which components are being exercised.
-
-Typical development flow:
+A typical development flow is:
 
 ```bash
 ./scripts/check_system.sh
@@ -74,55 +68,45 @@ just setup
 just dev-all
 ```
 
-Default development endpoints are typically:
+API and GUI services are configured around local development endpoints. External renderers and local LLMs require their own system dependencies.
 
-- GUI: `http://localhost:5173`
-- API: `http://localhost:8000`
+## Repository map
 
-A local LLM server is optional for architecture/UI development but required for model-backed generation paths.
+```text
+physics-foundry/
+├── apps/
+│   ├── gui/              # desktop/web UI
+│   └── orchestrator/     # FastAPI service and pipeline orchestration
+├── packages/
+│   ├── shared/           # shared schemas/types
+│   └── plugins/          # renderer/plugin interfaces
+├── config/               # runtime and renderer configuration
+├── docs/                 # architecture/product/portfolio documentation
+└── scripts/              # setup and development commands
+```
 
-## Engineering goals
+## Engineering priorities
 
-Physics Foundry is being used to explore several software-engineering problems:
-
-1. **Typed orchestration** between language-model outputs and renderer-specific code.
-2. **Isolation and sandboxing** of generated code before execution.
-3. **Observable long-running jobs** through REST, WebSockets, metrics, and structured status events.
-4. **Renderer abstraction** so mathematical animation, particle simulation, and 3D rendering can share one higher-level workflow.
-5. **Quality gates** that make generated scientific media inspectable rather than treating successful rendering as equivalent to correctness.
-
-## Repository claims
-
-| Claim | Status |
-|---|---|
-| FastAPI orchestration layer | Implemented |
-| REST health/status interfaces | Implemented |
-| WebSocket progress/event path | Implemented |
-| Metrics/observability hooks | Implemented |
-| Local LLM configuration path | Implemented / environment-dependent |
-| Renderer/plugin abstractions | Implemented as architecture |
-| End-to-end autonomous multi-renderer video generation | **Not yet established** |
-| Production-grade automatic remediation | **Not yet established** |
-| Production deployment readiness | **Not yet established** |
+1. Complete and test one real Manim vertical slice.
+2. Add fixture-mode integration coverage that does not require a GPU or local LLM.
+3. Make missing external dependencies fail explicitly rather than silently simulating success.
+4. Persist a reference run containing the prompt, scene plan, generated source, logs, MP4, and quality result.
+5. Only then expand the verified path to additional rendering engines.
 
 ## Limitations
 
-- Some pipeline stages currently use simulated timing or templated outputs rather than invoking a real renderer.
-- External tools and models are not bundled with the repository.
-- Scientific correctness validation is not solved merely by rendering successfully.
-- Multi-engine parity and automatic remediation need explicit integration tests before they should be treated as operational features.
-- Hardware-specific performance claims should be benchmarked on reproducible workloads before publication.
+- Multi-engine autonomous generation is experimental.
+- A renderer interface does not imply that every renderer path is end-to-end complete.
+- Quality-analysis interfaces and thresholds do not establish guaranteed visual or pedagogical quality.
+- Local LLM, GPU, Blender, Taichi, Manim, FFmpeg, and audio-tool availability varies by machine.
+- The repository is a research/engineering prototype, not a hosted production service.
 
-## Next milestone
+## Why this repository exists
 
-The highest-priority milestone is a single reproducible vertical slice:
+The project is primarily an exercise in software architecture for scientific-media generation: typed orchestration, asynchronous progress reporting, renderer abstraction, sandboxing, quality gates, observability, and human-reviewable artifacts.
 
-```text
-prompt → scene plan → Manim code → sandbox → render → quality check → MP4
-```
-
-That path should include automated tests and a small reproducible example before additional renderer breadth is treated as complete.
+That architecture is the current demonstrated value. Autonomous production-grade generation is the target, not a claim.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [`LICENSE`](LICENSE).
