@@ -1,0 +1,1 @@
+This branch contains temporary portfolio-audit documentation. Before merging, overlapping notes should be consolidated so the default branch remains concise.
