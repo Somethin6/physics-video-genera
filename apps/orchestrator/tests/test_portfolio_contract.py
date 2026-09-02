@@ -1,4 +1,4 @@
-"""Dependency-light tests for portfolio claim semantics."""
+"""Dependency-light tests for portfolio and sandbox claim semantics."""
 
 from datetime import datetime
 
@@ -17,6 +17,10 @@ from orchestrator.core.dsl_models import (
     SceneRequest,
 )
 from orchestrator.core.fixtures import build_fixture_plan
+from orchestrator.core.sandbox_policy import (
+    validate_python_source,
+    validate_workspace_path,
+)
 
 
 def _pipeline(pipeline_id: str) -> PipelineStatus:
@@ -50,6 +54,9 @@ def test_capability_matrix_is_explicit_boolean_state(monkeypatch: pytest.MonkeyP
     assert matrix["fixture_mode"] is False
     assert "manim_cli" in matrix
     assert "ffmpeg" in matrix
+    assert "firejail" in matrix
+    assert "nsjail" in matrix
+    assert "sandbox_execution_supported" in matrix
     assert "local_llm_configured" in matrix
     assert all(isinstance(value, bool) for value in matrix.values())
 
@@ -89,3 +96,48 @@ def test_pipeline_defaults_are_isolated_between_instances() -> None:
 def test_fixture_and_unsupported_are_distinct_terminal_states() -> None:
     assert PipelineStatusType.FIXTURE_COMPLETE != PipelineStatusType.COMPLETE
     assert PipelineStatusType.UNSUPPORTED != PipelineStatusType.ERROR
+
+
+def test_workspace_policy_rejects_absolute_and_parent_paths() -> None:
+    assert validate_workspace_path("scene.py")["safe"] is True
+    assert validate_workspace_path("assets/data.json")["safe"] is True
+    assert validate_workspace_path("../secret.txt")["safe"] is False
+    assert validate_workspace_path("/etc/passwd")["safe"] is False
+
+
+def test_static_policy_allows_bounded_scientific_source() -> None:
+    source = """
+from math import sin
+import numpy as np
+from manim import Scene
+x = np.array([sin(0.0)])
+"""
+    result = validate_python_source(source)
+    assert result["safe"] is True
+    assert result["blocked_imports"] == []
+    assert result["dangerous_calls"] == []
+
+
+def test_static_policy_rejects_process_and_network_imports() -> None:
+    result = validate_python_source("import subprocess\nimport requests\n")
+    assert result["safe"] is False
+    assert "subprocess" in result["blocked_imports"]
+    assert "requests" in result["blocked_imports"]
+
+
+def test_static_policy_rejects_dynamic_execution_and_shell_calls() -> None:
+    source = """
+import math
+eval('2 + 2')
+math.system('echo unsafe')
+"""
+    result = validate_python_source(source)
+    assert result["safe"] is False
+    assert "eval" in result["dangerous_calls"]
+    assert "system" in result["dangerous_calls"]
+
+
+def test_static_policy_rejects_relative_imports() -> None:
+    result = validate_python_source("from .local_module import value\n")
+    assert result["safe"] is False
+    assert "relative import" in result["blocked_imports"]
