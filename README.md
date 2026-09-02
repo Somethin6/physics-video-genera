@@ -4,7 +4,7 @@ Local-first prototype for AI-assisted physics animation and rendering workflows.
 
 Physics Foundry explores a modular pipeline for turning a bounded physics prompt into structured scene plans, generated animation code, renderer jobs, quality checks, and reviewable artifacts. The repository contains substantial application and orchestration scaffolding, but the full autonomous multi-engine pipeline is **not presented as production-ready**.
 
-> **Current state:** active prototype. See [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md), [`docs/CLAIMS.md`](docs/CLAIMS.md), and [`docs/PORTFOLIO_ROADMAP.md`](docs/PORTFOLIO_ROADMAP.md) for the implementation ledger and the next reproducible milestone.
+> **Current state:** active prototype. See [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md), [`docs/CLAIMS.md`](docs/CLAIMS.md), [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md), and [`docs/PORTFOLIO_ROADMAP.md`](docs/PORTFOLIO_ROADMAP.md) for the implementation ledger and next reproducible milestone.
 
 ## What is implemented
 
@@ -99,6 +99,7 @@ physics-foundry/
 - A renderer interface does not imply that every renderer path is end-to-end complete.
 - Quality-analysis interfaces and thresholds do not establish guaranteed visual or pedagogical quality.
 - Local LLM, GPU, Blender, Taichi, Manim, FFmpeg, and audio-tool availability varies by machine.
+- Generated renderer code must be treated as untrusted input; see [`SECURITY-NOTES.md`](SECURITY-NOTES.md).
 - The repository is a research/engineering prototype, not a hosted production service.
 
 ## Why this repository exists
