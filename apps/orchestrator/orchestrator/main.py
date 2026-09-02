@@ -6,10 +6,8 @@ Deterministic fixture mode exists only for testing orchestration semantics.
 """
 
 import asyncio
-import importlib.util
 import logging
 import os
-import shutil
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -20,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
+from .core.capabilities import FIXTURE_MODE_ENV, capability_matrix, fixture_mode_enabled
 from .core.dsl_models import (
     LogLevel,
     PipelineLogEntry,
@@ -27,6 +26,7 @@ from .core.dsl_models import (
     PipelineStatusType,
     SceneRequest,
 )
+from .core.fixtures import build_fixture_plan
 from .core.media_pipeline import initialize_media_pipeline
 from .core.observability import (
     observability_manager,
@@ -43,41 +43,6 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
-
-FIXTURE_MODE_ENV = "PHYSICS_FOUNDRY_FIXTURE_MODE"
-
-
-def fixture_mode_enabled() -> bool:
-    """Return True only when deterministic test mode is explicitly enabled."""
-
-    return os.getenv(FIXTURE_MODE_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
-
-
-def command_available(command: str) -> bool:
-    """Check whether an external command is available on PATH."""
-
-    return shutil.which(command) is not None
-
-
-def module_available(module: str) -> bool:
-    """Check whether an optional Python module can be imported."""
-
-    return importlib.util.find_spec(module) is not None
-
-
-def capability_matrix() -> Dict[str, bool]:
-    """Report capabilities without implying unsupported paths are operational."""
-
-    return {
-        "fixture_mode": fixture_mode_enabled(),
-        "manim_cli": command_available("manim"),
-        "ffmpeg": command_available("ffmpeg"),
-        "blender": command_available("blender"),
-        "taichi_python": module_available("taichi"),
-        "latex": command_available("latex") or command_available("pdflatex"),
-        "nvidia_smi": command_available("nvidia-smi"),
-        "local_llm_configured": bool(os.getenv("LLM_ENDPOINT")),
-    }
 
 
 class SystemStatus(BaseModel):
@@ -189,7 +154,7 @@ async def system_status():
         mode="fixture" if fixture_mode_enabled() else "prototype",
         ocio_config=ocio_config if ocio_available else None,
         gpu_available=capabilities["nvidia_smi"],
-        sandbox_ready=True,
+        sandbox_ready=capabilities["sandbox_binary_available"],
         quality_gates_enabled=True,
         capabilities=capabilities,
         observability={
@@ -394,18 +359,7 @@ async def process_fixture_pipeline(pipeline_id: str, request: SceneRequest):
         "Fixture: validating bounded request",
     )
 
-    # Deliberately deterministic structure used only to test orchestration plumbing.
-    fixture_plan = {
-        "fixture": True,
-        "topic": request.topic,
-        "duration": request.duration,
-        "level": request.level.value,
-        "scenes": [
-            {"id": "fixture-01", "engine": "manim", "purpose": "introduction"},
-            {"id": "fixture-02", "engine": "manim", "purpose": "core concept"},
-        ],
-    }
-
+    fixture_plan = build_fixture_plan(request)
     pipeline = active_pipelines[pipeline_id]
     pipeline.logs.append(
         PipelineLogEntry(
