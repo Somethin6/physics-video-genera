@@ -27,7 +27,12 @@ def module_available(module: str) -> bool:
 
 
 def capability_matrix() -> Dict[str, bool]:
-    """Report dependency availability without implying end-to-end verification."""
+    """Report dependency availability without implying end-to-end verification.
+
+    ``nsjail`` is reported as an installed capability only. The current
+    generated-code execution contract deliberately treats firejail as the sole
+    verified backend and refuses to fall back to direct host execution.
+    """
 
     firejail = command_available("firejail")
     nsjail = command_available("nsjail")
@@ -42,6 +47,6 @@ def capability_matrix() -> Dict[str, bool]:
         "nvidia_smi": command_available("nvidia-smi"),
         "firejail": firejail,
         "nsjail": nsjail,
-        "sandbox_binary_available": firejail or nsjail,
+        "sandbox_execution_supported": firejail,
         "local_llm_configured": bool(os.getenv("LLM_ENDPOINT")),
     }
