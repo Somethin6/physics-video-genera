@@ -1,251 +1,128 @@
-# Physics Foundry - Monorepo
+# Physics Foundry
 
-**Local-First AI Physics Video Generation Pipeline**
+Local-first research prototype for orchestrating AI-assisted physics visualization workflows.
 
-A modular, error-coded, multi-model physics video generation system with real-time monitoring, quality assurance, and comprehensive observability.
+Physics Foundry explores a modular pipeline for turning a physics prompt into a structured scene plan, renderer-specific code, generated media, and quality-analysis artifacts. The repository combines a React/Tauri-facing application with a Python FastAPI orchestration service and shared schemas for renderer and pipeline state.
 
-## 🚀 Quick Start
+> **Status:** active prototype. Core API, WebSocket, schema, monitoring, and orchestration scaffolding are implemented. Several downstream generation/render stages are still mocked, simulated, or incomplete. This repository should be read as a software-architecture and research prototype, not as a finished autonomous production system.
+
+## What is implemented
+
+- FastAPI orchestration service with REST endpoints and WebSocket progress events
+- typed request/response models and shared pipeline state
+- health/status endpoints and background task orchestration
+- Prometheus-compatible metrics and observability hooks
+- GPU/system monitoring hooks
+- sandbox/execution interfaces for generated renderer code
+- React/Tauri-oriented frontend structure
+- renderer/plugin abstractions for Manim, Taichi, and Blender-style workflows
+- configuration for local OpenAI-compatible LLM servers such as llama.cpp
+
+## What is still experimental
+
+- fully autonomous prompt-to-video execution
+- reliable multi-engine renderer selection
+- complete Manim/Taichi/Blender execution across all paths
+- automatic scene repair/remediation
+- production audio alignment and final assembly
+- production deployment and operational hardening
+
+The current orchestrator contains placeholder/simulated stages in parts of the pipeline. Those paths are intentionally treated as prototype scaffolding until they are replaced by reproducible renderer execution and end-to-end tests.
+
+## Architecture
+
+```text
+physics-foundry/
+├── apps/
+│   ├── gui/                    # React / Tauri-facing UI
+│   └── orchestrator/           # FastAPI orchestration service
+├── packages/
+│   ├── shared/                 # shared schemas and generated types
+│   └── plugins/                # renderer/plugin abstractions
+├── config/                     # runtime and model configuration
+├── docs/                       # architecture / operations notes
+└── scripts/                    # local development utilities
+```
+
+The intended research path is:
+
+```text
+physics prompt
+    ↓
+structured scene specification
+    ↓
+renderer-specific code
+    ↓
+sandboxed execution
+    ↓
+rendered artifact
+    ↓
+quality analysis / diagnostics
+```
+
+The repository is currently strongest in the orchestration, interface, monitoring, and software-architecture layers. Completing one reproducible end-to-end renderer path is the next major milestone.
+
+## Local development
+
+The project has multiple runtime dependencies. Exact setup depends on which components are being exercised.
+
+Typical development flow:
 
 ```bash
-# 1. System check
 ./scripts/check_system.sh
-
-# 2. Setup development environment  
 just setup
-
-# 3. Install LLM server (optional)
-just install-llm
-
-# 4. Start development servers
 just dev-all
 ```
 
-Open [http://localhost:5173](http://localhost:5173) for GUI, [http://localhost:8000](http://localhost:8000) for API.
+Default development endpoints are typically:
 
-## 🏗️ Architecture
+- GUI: `http://localhost:5173`
+- API: `http://localhost:8000`
 
-### Apps
-- **`/apps/gui/`** - Tauri + React + Vite frontend
-- **`/apps/orchestrator/`** - FastAPI + WebSockets backend
+A local LLM server is optional for architecture/UI development but required for model-backed generation paths.
 
-### Packages  
-- **`/packages/shared/`** - Shared TypeScript/Python types
-- **`/packages/plugins/`** - Extensible render engine plugins
+## Engineering goals
 
-### Configuration
-- **`/config/runtime.config.json`** - LLM models, rendering, quality settings
-- **`/config/spark.json`** - Prompt templates and engine selection
-- **`/config/ocio/`** - Color management (Rec.709/BT.1886/AgX)
+Physics Foundry is being used to explore several software-engineering problems:
 
-## 🎯 Key Features
+1. **Typed orchestration** between language-model outputs and renderer-specific code.
+2. **Isolation and sandboxing** of generated code before execution.
+3. **Observable long-running jobs** through REST, WebSockets, metrics, and structured status events.
+4. **Renderer abstraction** so mathematical animation, particle simulation, and 3D rendering can share one higher-level workflow.
+5. **Quality gates** that make generated scientific media inspectable rather than treating successful rendering as equivalent to correctness.
 
-### Local AI Integration
-- **Multiple LLMs** via OpenAI-compatible server (llama.cpp)
-- **Real-time token streaming** during script generation  
-- **Role-based models** (planner, critic, code generator)
+## Repository claims
 
-### Multi-Engine Rendering
-- **Manim** - Mathematical equations and 2D animations
-- **Taichi** - Fluid dynamics and particle systems
-- **Blender** - 3D models and cinematic sequences
-- **Intelligent engine selection** based on content analysis
+| Claim | Status |
+|---|---|
+| FastAPI orchestration layer | Implemented |
+| REST health/status interfaces | Implemented |
+| WebSocket progress/event path | Implemented |
+| Metrics/observability hooks | Implemented |
+| Local LLM configuration path | Implemented / environment-dependent |
+| Renderer/plugin abstractions | Implemented as architecture |
+| End-to-end autonomous multi-renderer video generation | **Not yet established** |
+| Production-grade automatic remediation | **Not yet established** |
+| Production deployment readiness | **Not yet established** |
 
-### Quality Assurance
-- **Frame-by-frame analysis** with SSIM/optical flow
-- **Real-time monitoring** with issue detection
-- **Auto-remediation** for common problems
-- **Color management** with OCIO compliance
+## Limitations
 
-### Audio Pipeline
-- **Whisper.cpp** transcription with GPU acceleration
-- **Montreal Forced Aligner** for word-level sync
-- **EBU R128 loudness** normalization
-- **OpenTimelineIO** as timing authority
+- Some pipeline stages currently use simulated timing or templated outputs rather than invoking a real renderer.
+- External tools and models are not bundled with the repository.
+- Scientific correctness validation is not solved merely by rendering successfully.
+- Multi-engine parity and automatic remediation need explicit integration tests before they should be treated as operational features.
+- Hardware-specific performance claims should be benchmarked on reproducible workloads before publication.
 
-## 🛠️ Development Commands
+## Next milestone
 
-```bash
-# Development
-just dev-gui         # Start React frontend
-just dev-api         # Start FastAPI backend  
-just dev-all         # Start all services
+The highest-priority milestone is a single reproducible vertical slice:
 
-# Building
-just build           # Build all apps
-just build-gui       # Build frontend only
-just build-api       # Build backend only
-
-# Testing & Quality
-just test            # Run all tests
-just lint            # Lint all code
-just format          # Format all code
-
-# Pipeline Operations  
-just plan "Topic" 120 intermediate    # Plan physics video
-just preview project-123             # Start preview render
-just qc /path/to/sequence            # Quality check
-just final project-123               # Final assembly
-
-# System
-just check           # System requirements check
-just health          # Service health check
-just logs            # View application logs
+```text
+prompt → scene plan → Manim code → sandbox → render → quality check → MP4
 ```
 
-## 📁 Project Structure
+That path should include automated tests and a small reproducible example before additional renderer breadth is treated as complete.
 
-```
-physics-foundry/
-├── apps/
-│   ├── gui/                    # React + Tauri frontend
-│   │   ├── src/
-│   │   │   ├── components/
-│   │   │   │   ├── RenderPreview.tsx           # Unified render preview (4 modes)
-│   │   │   │   ├── PipelineMonitor.tsx         # Real-time pipeline status
-│   │   │   │   ├── AudioAlignmentWorkspace.tsx # Voice sync interface
-│   │   │   │   ├── LiveCodeWorkspace.tsx       # Code editing with diffs
-│   │   │   │   ├── QAAnalysisDashboard.tsx     # Quality metrics
-│   │   │   │   └── SystemMonitor.tsx           # GPU/CPU monitoring
-│   │   │   └── lib/
-│   │   └── package.json
-│   └── orchestrator/           # FastAPI backend  
-│       ├── orchestrator/
-│       │   ├── api/           # REST & WebSocket endpoints
-│       │   ├── core/          # DSL models, timeline, LLM integration
-│       │   ├── workers/       # Blender/Manim/Taichi workers
-│       │   └── main.py
-│       └── pyproject.toml
-├── packages/
-│   ├── shared/
-│   │   ├── schema/           # JSON Schema definitions
-│   │   ├── ts/               # Generated TypeScript types
-│   │   └── py/               # Generated Python models  
-│   └── plugins/              # Render engine extensions
-├── config/
-│   ├── runtime.config.json   # Multi-model LLM + render settings
-│   ├── spark.json           # Prompt templates
-│   └── ocio/                # Color management profiles
-├── scripts/
-│   ├── check_system.sh      # Dependency verification  
-│   ├── install_llama_server.sh # LLM server setup
-│   └── justfile             # Development commands
-└── docs/                    # Documentation
-```
+## License
 
-## 🔧 Component Consolidation
-
-**Previously**: 4 separate render preview components with overlapping functionality
-- `AdvancedRenderPreview.tsx`
-- `EnhancedRenderPreview.tsx` 
-- `ComprehensiveRenderPreview.tsx`
-- `FrameQAViewer.tsx`
-
-**Now**: Single `RenderPreview.tsx` with mode switching:
-- `mode="basic"` - Simple playback and analysis
-- `mode="enhanced"` - Advanced controls and batch processing
-- `mode="frameQA"` - Frame-by-frame quality analysis  
-- `mode="comprehensive"` - Full pipeline monitoring
-
-## 🎨 UI Components
-
-### Unified RenderPreview Modes
-
-```tsx
-// Basic preview
-<RenderPreview mode="basic" sequence={seq} onAnalyzeFrame={analyze} />
-
-// Enhanced with batch analysis
-<RenderPreview 
-  mode="enhanced" 
-  sequence={seq}
-  onBatchAnalysis={batchAnalyze}
-  onCompareFrames={compare}
-/>
-
-// Comprehensive monitoring
-<RenderPreview mode="comprehensive" {...props} />
-```
-
-### Real-time Pipeline Monitor
-
-```tsx  
-<PipelineMonitor 
-  request={videoRequest}
-  onComplete={handleComplete}
-/>
-```
-
-Shows live progress, system stats, logs, and artifacts with WebSocket updates.
-
-## 🤖 LLM Configuration
-
-```json
-{
-  "llm": {
-    "endpoint": "http://127.0.0.1:8080/v1",
-    "models": [
-      {"name": "gpt-neox-20b-q4", "n_gpu_layers": 28},
-      {"name": "mistral-7b-instruct-q5", "n_gpu_layers": 35}  
-    ],
-    "roles": {
-      "planner": "gpt-neox-20b-q4",
-      "script_critic": "mistral-7b-instruct-q5"
-    }
-  }
-}
-```
-
-## 🎬 Quality Assurance
-
-### Automated Analysis
-- **SSIM threshold**: 0.9 minimum
-- **Motion stability**: 0.8 minimum  
-- **Text legibility**: 0.85 minimum
-- **Color accuracy**: 0.95 minimum
-
-### Error Codes with Auto-fixes
-- `LLM-JSON-001` - Invalid DSL → field repair
-- `BLD-OPTIX-302` - OptiX OOM → CUDA fallback  
-- `MNM-OGL-101` - OpenGL fail → Cairo fallback
-- `ENC-NVENC-801` - NVENC unavailable → libx264 fallback
-
-## 🔍 Monitoring & Observability
-
-- **Prometheus metrics** at `/metrics`
-- **OpenTelemetry tracing** across pipeline
-- **WebSocket events** for real-time updates
-- **nvidia-smi integration** for GPU monitoring
-- **Health checks** at `/health`
-
-## 🚀 Production Deployment
-
-```bash
-# Build for production
-just build
-
-# Deploy (configure for your infrastructure)
-just deploy-staging
-just deploy-prod
-```
-
-## 📖 Documentation
-
-- **[PRD](docs/PRD.md)** - Complete product requirements
-- **[Operations](docs/OPERATIONS.md)** - Runbooks and troubleshooting
-- **[ADRs](docs/ADRs/)** - Architecture decision records
-
-## 🤝 Contributing
-
-1. Run system checks: `just check`
-2. Start development: `just dev-all`  
-3. Make changes with tests: `just test`
-4. Format and lint: `just format && just lint`
-5. Submit PR
-
-## 📄 License
-
-MIT - See [LICENSE](LICENSE) for details.
-
----
-
-**Physics Foundry** - From concept to professional physics video in minutes, not hours.
+MIT. See [LICENSE](LICENSE).
