@@ -1,31 +1,24 @@
-Thanks for helping make GitHub safe for everyone.
-
 # Security
 
-GitHub takes the security of our software products and services seriously, including all of the open source code repositories managed through our GitHub organizations, such as [GitHub](https://github.com/GitHub).
+Physics Foundry is an active research/engineering prototype. It includes code paths intended to execute generated renderer source, which should be treated as untrusted input.
 
-Even though [open source repositories are outside of the scope of our bug bounty program](https://bounty.github.com/index.html#scope) and therefore not eligible for bounty rewards, we will ensure that your finding gets passed along to the appropriate maintainers for remediation. 
+## Current security boundary
 
-## Reporting Security Issues
+The repository contains static source validation and nsjail/firejail-oriented sandbox infrastructure, but it is **not claimed to be hardened for hostile multi-tenant execution**. Do not expose generated-code execution to untrusted remote users on the basis of the current prototype alone.
 
-If you believe you have found a security vulnerability in any GitHub-owned repository, please report it to us through coordinated disclosure.
+Production-facing execution should preserve these invariants:
 
-**Please do not report security vulnerabilities through public GitHub issues, discussions, or pull requests.**
+- generated code runs only through an explicit sandbox boundary;
+- unavailable sandbox/render dependencies fail explicitly rather than falling back to direct host execution;
+- network and filesystem access are minimized and documented;
+- time, memory, process, and output limits are enforced;
+- command, exit status, logs, and artifact paths are retained;
+- fixture/test completion can never be surfaced as real render completion.
 
-Instead, please send an email to opensource-security[@]github.com.
+Known sandbox-hardening work is tracked in issue #27.
 
-Please include as much of the information listed below as you can to help us better understand and resolve the issue:
+## Reporting a vulnerability
 
-  * The type of issue (e.g., buffer overflow, SQL injection, or cross-site scripting)
-  * Full paths of source file(s) related to the manifestation of the issue
-  * The location of the affected source code (tag/branch/commit or direct URL)
-  * Any special configuration required to reproduce the issue
-  * Step-by-step instructions to reproduce the issue
-  * Proof-of-concept or exploit code (if possible)
-  * Impact of the issue, including how an attacker might exploit the issue
+Please use GitHub's private vulnerability-reporting mechanism if it is enabled for this repository. If private reporting is unavailable, contact the repository owner privately rather than publishing exploit details in a public issue.
 
-This information will help us triage your report more quickly.
-
-## Policy
-
-See [GitHub's Safe Harbor Policy](https://docs.github.com/en/site-policy/security-policies/github-bug-bounty-program-legal-safe-harbor#1-safe-harbor-terms)
+Include the affected file/path, environment assumptions, reproduction steps, and expected impact. Do not include real secrets, credentials, or third-party private data in reports.
