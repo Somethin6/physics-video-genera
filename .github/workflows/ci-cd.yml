@@ -14,6 +14,7 @@ jobs:
   orchestrator-contract:
     name: Orchestrator contract
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
@@ -29,12 +30,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "pydantic>=2.5,<3" "pytest>=7.4,<9"
 
-      - name: Compile dependency-light core modules
+      - name: Compile portfolio contract modules
         run: |
           python -m py_compile \
             apps/orchestrator/orchestrator/core/dsl_models.py \
             apps/orchestrator/orchestrator/core/capabilities.py \
-            apps/orchestrator/orchestrator/core/fixtures.py
+            apps/orchestrator/orchestrator/core/fixtures.py \
+            apps/orchestrator/orchestrator/core/sandbox_policy.py \
+            apps/orchestrator/orchestrator/core/sandbox.py
 
       - name: Run portfolio contract tests
         env:
@@ -43,6 +46,7 @@ jobs:
           pytest -q apps/orchestrator/tests/test_portfolio_contract.py
 
       - name: Explain CI scope
+        if: always()
         run: |
-          echo "This job verifies dependency-light orchestration contracts only."
-          echo "It does not claim GPU, LLM, Manim, Blender, Taichi, FFmpeg, or end-to-end rendering capability."
+          echo "This job verifies dependency-light orchestration and sandbox policy contracts."
+          echo "It does not claim GPU, LLM, Manim, Blender, Taichi, FFmpeg, firejail runtime, or end-to-end rendering capability."
