@@ -29,6 +29,9 @@ def module_available(module: str) -> bool:
 def capability_matrix() -> Dict[str, bool]:
     """Report dependency availability without implying end-to-end verification."""
 
+    firejail = command_available("firejail")
+    nsjail = command_available("nsjail")
+
     return {
         "fixture_mode": fixture_mode_enabled(),
         "manim_cli": command_available("manim"),
@@ -37,5 +40,8 @@ def capability_matrix() -> Dict[str, bool]:
         "taichi_python": module_available("taichi"),
         "latex": command_available("latex") or command_available("pdflatex"),
         "nvidia_smi": command_available("nvidia-smi"),
+        "firejail": firejail,
+        "nsjail": nsjail,
+        "sandbox_binary_available": firejail or nsjail,
         "local_llm_configured": bool(os.getenv("LLM_ENDPOINT")),
     }
