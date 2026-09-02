@@ -6,8 +6,10 @@
     "scripts": {
         "dev": "vite",
         "build": "tsc -b --noCheck && vite build",
+        "test": "vitest run",
         "lint": "eslint .",
         "format": "prettier --write .",
+        "format:check": "prettier --check .",
         "preview": "vite preview",
         "tauri:dev": "tauri dev",
         "tauri:build": "tauri build"
