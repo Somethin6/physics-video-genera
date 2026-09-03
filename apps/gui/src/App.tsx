@@ -56,7 +56,7 @@ function App() {
     setProjects((current) => [...current, newProject])
     setShowCreateProject(false)
 
-    const request: PhysicsVideoRequest = {
+    setCurrentRequest({
       topic: projectData.topic,
       duration: projectData.duration,
       level: 'intermediate',
@@ -65,9 +65,7 @@ function App() {
         fontStack: ['Inter', 'JetBrains Mono'],
         motionVocabulary: 'smooth',
       },
-    }
-
-    setCurrentRequest(request)
+    })
     setActiveTab('pipeline')
   }
 
@@ -81,9 +79,6 @@ function App() {
     }
   }
 
-  const handleStartAnalysis = () => setIsAnalyzing(true)
-  const handleStopAnalysis = () => setIsAnalyzing(false)
-
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
@@ -94,7 +89,7 @@ function App() {
                 Physics Foundry
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Prototype scientific-media orchestration interface
+                Evidence-aware scientific-media orchestration prototype
               </p>
             </div>
 
@@ -111,10 +106,10 @@ function App() {
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded border border-border bg-background px-2 py-0.5 text-xs font-semibold uppercase tracking-wide">
-                Demo / fixture UI
+                Mixed provenance prototype
               </span>
               <span className="text-muted-foreground">
-                {DATA_PROVENANCE.demo.description} Panels are promoted to live only when connected to an actual service or measurement path.
+                Pipeline and system panels read backend state. Code, QA, and alignment examples remain explicitly deterministic demos. {DATA_PROVENANCE.demo.description}
               </span>
             </div>
           </div>
@@ -126,8 +121,8 @@ function App() {
           <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-            <TabsTrigger value="code">Code Demo</TabsTrigger>
-            <TabsTrigger value="audio">Audio Demo</TabsTrigger>
+            <TabsTrigger value="code">Code Review</TabsTrigger>
+            <TabsTrigger value="audio">Audio Review</TabsTrigger>
             <TabsTrigger value="qa-analysis">QA Demo</TabsTrigger>
             <TabsTrigger value="qa-preview">Preview Demo</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
@@ -160,20 +155,13 @@ function App() {
           <TabsContent value="code" className="space-y-6">
             <LiveCodeWorkspace
               onCodeUpdate={(sceneId) => {
-                console.log('Demo code updated for scene:', sceneId)
-              }}
-              onRenderRequest={(sceneId) => {
-                console.log('Demo render requested for scene:', sceneId)
+                console.log('Local demo review state updated for scene:', sceneId)
               }}
             />
           </TabsContent>
 
           <TabsContent value="audio" className="space-y-6">
-            <AudioAlignmentWorkspace
-              onAlignmentComplete={(alignments) => {
-                console.log('Demo alignment callback:', alignments)
-              }}
-            />
+            <AudioAlignmentWorkspace />
           </TabsContent>
 
           <TabsContent value="qa-analysis" className="space-y-6">
@@ -181,8 +169,8 @@ function App() {
               metrics={demoQAMetrics}
               recentAnalyses={generateDemoFrameAnalyses(20)}
               isAnalyzing={isAnalyzing}
-              onStartAnalysis={handleStartAnalysis}
-              onStopAnalysis={handleStopAnalysis}
+              onStartAnalysis={() => setIsAnalyzing(true)}
+              onStopAnalysis={() => setIsAnalyzing(false)}
             />
           </TabsContent>
 
