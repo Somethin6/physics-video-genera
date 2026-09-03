@@ -23,8 +23,8 @@ interface StatusResponse {
 }
 
 const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ||
-  'http://localhost:8000'
+  (import.meta.env.VITE_ORCHESTRATOR_URL as string | undefined)?.replace(/\/$/, '') ||
+  'http://127.0.0.1:8000'
 
 const CAPABILITY_LABELS: Record<string, string> = {
   fixture_mode: 'Fixture mode',
@@ -95,7 +95,7 @@ export default function SystemMonitor() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle className="font-sans">Orchestrator status</CardTitle>
+              <CardTitle>Orchestrator status</CardTitle>
               <p className="mt-1 text-xs text-muted-foreground">
                 Live values from {API_BASE_URL}. No random telemetry is generated in this panel.
               </p>
@@ -116,7 +116,7 @@ export default function SystemMonitor() {
               <div className="font-medium">No live orchestrator data</div>
               <div className="mt-1 text-muted-foreground">{error}</div>
               <div className="mt-2 text-xs text-muted-foreground">
-                Start the API or set `VITE_API_BASE_URL`. This panel intentionally does not fall back to demo hardware statistics.
+                Start the API or set <code>VITE_ORCHESTRATOR_URL</code>. This panel intentionally does not fall back to demo hardware statistics.
               </div>
             </div>
           ) : (
@@ -173,7 +173,7 @@ export default function SystemMonitor() {
                 </CardHeader>
                 <CardContent className="space-y-1">
                   <div className="font-mono text-lg">
-                    {availableCount}/{capabilityEntries.length || 0}
+                    {availableCount}/{capabilityEntries.length}
                   </div>
                   <div className="text-xs text-muted-foreground">reported available</div>
                 </CardContent>
@@ -185,7 +185,7 @@ export default function SystemMonitor() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-sans">Capability matrix</CardTitle>
+          <CardTitle>Capability matrix</CardTitle>
         </CardHeader>
         <CardContent>
           {capabilityEntries.length === 0 ? (
@@ -215,7 +215,7 @@ export default function SystemMonitor() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-sans">Evidence boundary</CardTitle>
+          <CardTitle>Evidence boundary</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
