@@ -34,7 +34,6 @@ from .core.observability import (
     setup_observability_stack,
     system_monitor,
 )
-from .core.quality_gates import default_quality_gate
 from .core.sandbox import execute_safe_code, sandbox_manager
 
 logging.basicConfig(
@@ -53,7 +52,7 @@ class SystemStatus(BaseModel):
     mode: str
     gpu_available: bool = False
     sandbox_ready: bool = False
-    quality_gates_enabled: bool = True
+    quality_gates_enabled: bool = False
     capabilities: Dict[str, bool] = Field(default_factory=dict)
     observability: Dict[str, bool] = Field(default_factory=dict)
 
@@ -132,7 +131,7 @@ async def system_status():
         mode="fixture" if fixture_mode_enabled() else "prototype",
         gpu_available=capabilities["nvidia_smi"],
         sandbox_ready=capabilities["sandbox_execution_supported"],
-        quality_gates_enabled=True,
+        quality_gates_enabled=capabilities["frame_qa_python"],
         capabilities=capabilities,
         observability={
             "prometheus": True,
@@ -222,10 +221,21 @@ async def get_pipeline_status(pipeline_id: str):
 
 @app.post("/api/pipeline/{pipeline_id}/quality-check")
 async def run_quality_check(pipeline_id: str, frame_paths: List[str]):
-    """Run measured frame statistics on caller-supplied paths."""
+    """Run measured frame statistics when the optional QA stack is installed."""
 
     if pipeline_id not in active_pipelines:
         raise HTTPException(status_code=404, detail="Pipeline not found")
+
+    if not capability_matrix()["frame_qa_python"]:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Frame QA is unavailable. Install the orchestrator QA extra "
+                "before requesting measured frame analysis."
+            ),
+        )
+
+    from .core.quality_gates import default_quality_gate
 
     try:
         frame_paths_obj = [Path(path) for path in frame_paths]
@@ -473,7 +483,7 @@ async def root():
         "mode": "fixture" if fixture_mode_enabled() else "prototype",
         "capabilities_endpoint": "/capabilities",
         "note": (
-            "The service exposes orchestration, observability, sandbox, and measured frame-QA infrastructure. "
+            "The service exposes orchestration, observability, sandbox, and optional measured frame-QA infrastructure. "
             "Real prompt-to-render completion is reported only when that path is verified."
         ),
     }
