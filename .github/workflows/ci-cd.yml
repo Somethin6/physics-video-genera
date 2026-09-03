@@ -28,7 +28,10 @@ jobs:
       - name: Install dependency-light test requirements
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "pydantic>=2.5,<3" "pytest>=7.4,<9"
+          python -m pip install \
+            "pydantic>=2.5,<3" \
+            "pytest>=7.4,<9" \
+            "pytest-asyncio>=0.21,<1"
 
       - name: Compile portfolio contract modules
         run: |
@@ -39,14 +42,16 @@ jobs:
             apps/orchestrator/orchestrator/core/sandbox_policy.py \
             apps/orchestrator/orchestrator/core/sandbox.py
 
-      - name: Run portfolio contract tests
+      - name: Run dependency-light contracts
         env:
           PYTHONPATH: apps/orchestrator
         run: |
-          pytest -q apps/orchestrator/tests/test_portfolio_contract.py
+          pytest -q \
+            apps/orchestrator/tests/test_portfolio_contract.py \
+            apps/orchestrator/tests/test_sandbox_runtime_contract.py
 
       - name: Explain CI scope
         if: always()
         run: |
-          echo "This job verifies dependency-light orchestration and sandbox policy contracts."
-          echo "It does not claim GPU, LLM, Manim, Blender, Taichi, FFmpeg, firejail runtime, or end-to-end rendering capability."
+          echo "This job verifies dependency-light orchestration and sandbox failure semantics."
+          echo "It does not claim GPU, LLM, Manim, Blender, Taichi, FFmpeg, firejail runtime isolation, or end-to-end rendering capability."
