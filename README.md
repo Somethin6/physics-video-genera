@@ -1,134 +1,193 @@
 # Physics Foundry
 
-Local-first prototype for AI-assisted physics animation and rendering workflows.
+**Local-first scientific-media orchestration for physics animation.**
 
-Physics Foundry explores a modular pipeline for turning a bounded physics prompt into structured scene plans, generated animation code, renderer jobs, quality checks, and reviewable artifacts. The repository contains substantial application and orchestration scaffolding, but the full autonomous multi-engine pipeline is **not presented as production-ready**.
+Physics Foundry is an engineering prototype for turning bounded physics requests into structured plans, generated renderer code, observable jobs, reviewable artifacts, and quality-analysis results. The project is deliberately evidence-first: UI fixtures are labeled as fixtures, missing capabilities fail explicitly, and generated code is never allowed to silently fall back to direct host execution.
 
-> **Current state:** active prototype. See [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md), [`docs/CLAIMS.md`](docs/CLAIMS.md), [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md), and [`docs/PORTFOLIO_ROADMAP.md`](docs/PORTFOLIO_ROADMAP.md) for the implementation ledger and next reproducible milestone.
+> **Status: active prototype.** The architecture and orchestration semantics are real; a retained real prompt → generated Manim → sandbox → MP4 → measured-QA reference run is the next evidence milestone in [issue #17](../../issues/17).
 
-## What is implemented
+## Why this project is interesting
 
-- React/Tauri-oriented GUI scaffolding under `apps/gui/`
-- FastAPI orchestration service under `apps/orchestrator/`
-- REST and WebSocket interfaces for jobs and progress events
-- Pydantic/typed request, status, log, worker, and artifact models
-- explicit dependency/capability reporting
-- opt-in deterministic fixture planning with a distinct `fixture_complete` state
-- generated-code policy checks for import/call restrictions and workspace-path traversal
-- renderer/plugin interfaces for Manim, Taichi, and Blender-oriented workers
-- Prometheus/OpenTelemetry-oriented observability hooks
-- configuration, quality-gate, and development tooling
+Physics Foundry is less about “AI makes a video” and more about the systems problem underneath it:
 
-## What is still experimental
+- **Typed orchestration:** explicit request, status, log, worker, artifact, and terminal-state models.
+- **Evidence-aware execution:** `complete`, `fixture_complete`, `unsupported`, and `error` have different meanings.
+- **Generated-code boundaries:** AST/path policy plus a sandbox wrapper that refuses unsandboxed fallback.
+- **Capability-driven UI:** pipeline and system panels read backend state instead of manufacturing fake progress or hardware telemetry.
+- **Renderer abstraction:** Manim, Taichi, and Blender-oriented interfaces can evolve independently.
+- **Inspectable QA:** synthetic QA used for the interface is deterministic and labeled as demo data rather than presented as measured output.
 
-The central prompt-to-video workflow is not yet a fully verified production pipeline. Several stages remain prototype implementations or interfaces, including automated planning, real generated-script-to-render integration, multi-engine rendering, remediation, assembly, and audio alignment.
+## Current evidence
 
-The current P0 milestone is intentionally narrower:
+| Area | Current state |
+| --- | --- |
+| React/Vite GUI | implemented prototype under `apps/gui/` |
+| FastAPI orchestration service | implemented |
+| REST + WebSocket job/status paths | implemented |
+| Dependency/capability reporting | implemented + dependency-light tests |
+| Deterministic fixture planning | implemented + distinct `fixture_complete` state |
+| GUI pipeline monitor | backend-driven, no client-side fake completion |
+| GUI system monitor | backend-driven, no randomized CPU/GPU/model readiness |
+| Generated-code static policy | implemented + contract tests |
+| Direct host fallback | removed by design |
+| Firejail execution wrapper | implemented; hostile/runtime isolation verification still pending |
+| Real prompt → Manim → MP4 → measured QA | **not yet established** |
+| Autonomous production-ready multi-engine generation | **not claimed** |
 
-```text
-bounded prompt
-    -> schema-valid scene plan
-    -> runnable Manim source
-    -> sandboxed execution
-    -> rendered MP4
-    -> real quality check
-    -> persisted artifacts + logs
-```
-
-When that path is reproducible from a clean checkout, it becomes the reference portfolio example. See issue #17.
-
-## Failure semantics
-
-The project deliberately distinguishes four terminal meanings:
-
-- `complete`: reserved for a real completed capability;
-- `fixture_complete`: deterministic orchestration test only, with no claim that media was rendered;
-- `unsupported`: a required real capability is not wired or available;
-- `error`: an attempted supported operation failed.
-
-The previous prototype behavior that could simulate rendering with sleeps and then report `complete` has been removed from the hardening branch.
+The detailed claim boundary lives in [`docs/CLAIMS.md`](docs/CLAIMS.md). Implementation status is tracked in [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
 
 ## Architecture
 
-```text
-apps/gui
-   |
-   v
-FastAPI / WebSocket orchestrator
-   |
-   +--> planning / typed scene representation
-   |
-   +--> generated-code policy + sandbox boundary
-   |
-   +--> renderer interfaces
-   |       +--> Manim
-   |       +--> Taichi (experimental)
-   |       +--> Blender (experimental)
-   |
-   +--> quality / artifact tracking
-   |
-   +--> observability
+```mermaid
+flowchart LR
+    U[Physics request] --> G[React GUI]
+    G --> A[FastAPI orchestrator]
+    A --> P[Typed planning / scene representation]
+    P --> S[Generated-code policy]
+    S --> X[Sandbox boundary]
+    X --> R{Renderer interface}
+    R --> M[Manim]
+    R --> T[Taichi experimental]
+    R --> B[Blender experimental]
+    R --> Q[Quality / artifact tracking]
+    A --> O[Logs / capability status / observability]
+    O --> G
+    Q --> G
 ```
 
-The design goal is to keep planning, rendering, validation, and artifact management separable so individual stages can be tested and replaced independently.
+The key design choice is separation. Planning does not need to know how rendering is implemented; rendering does not get to redefine success semantics; the GUI does not infer capability from decorative state.
+
+## Failure semantics
+
+Physics Foundry uses explicit terminal meanings:
+
+| State | Meaning |
+| --- | --- |
+| `complete` | a real supported operation completed |
+| `fixture_complete` | deterministic orchestration fixture completed; **no rendered-media claim** |
+| `unsupported` | the required real capability is unavailable or not wired |
+| `error` | a supported operation was attempted and failed |
+
+That distinction replaced earlier prototype behavior that could simulate work and eventually report success.
 
 ## Generated-code boundary
 
-Generated renderer code is treated as untrusted input. Static AST/path checks are defense-in-depth, not a security guarantee. The current execution wrapper deliberately requires the supported firejail path and returns `unsupported` when that isolation backend is unavailable rather than executing generated code directly on the host. nsjail may be detected as an installed tool, but it is not currently treated as a verified execution backend.
+Generated renderer code is treated as untrusted input.
 
-See [`SECURITY.md`](SECURITY.md) for the security boundary and issue #27 for remaining runtime hardening/verification work.
+Static validation currently rejects disallowed imports/calls, relative imports, dynamic execution patterns, shell-like execution, absolute staging paths, and parent-path traversal. Those checks are defense-in-depth, not a security boundary by themselves.
 
-## Development
+Real execution currently requires the supported **Firejail** path. If the isolation backend is unavailable, execution returns `unsupported` instead of running generated Python or Blender code directly on the host. `nsjail` may be detected as installed, but it is not currently treated as a verified execution backend.
 
-The repository includes project-specific setup and development tooling. The exact commands depend on which GUI, local-model, and renderer dependencies are installed.
+Runtime adversarial isolation remains an explicit open verification task in [issue #27](../../issues/27) and [`SECURITY.md`](SECURITY.md).
 
-A typical development flow is:
+## Quick start
+
+### GUI
 
 ```bash
-./scripts/check_system.sh
-just setup
-just dev-all
+git clone https://github.com/ddelucchi/physics-video-genera.git
+cd physics-video-genera
+npm install
+npm run dev:gui
 ```
 
-The dependency-light portfolio contract is documented in [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md).
+The canonical frontend lives in `apps/gui/`. The repository root is a workspace coordinator, not a second application.
+
+### Orchestrator API
+
+Python 3.11 is the reference interpreter.
+
+```bash
+cd apps/orchestrator
+python -m pip install -e .
+python -m uvicorn orchestrator.main:app --reload --port 8000
+```
+
+Useful endpoints:
+
+```text
+GET  /health
+GET  /status
+GET  /capabilities
+GET  /metrics
+POST /api/pipeline/create
+GET  /api/pipeline/{pipeline_id}/status
+```
+
+The GUI defaults to `http://127.0.0.1:8000` and can be pointed elsewhere with `VITE_ORCHESTRATOR_URL`.
+
+## Dependency-light verification
+
+The portfolio contract intentionally avoids requiring a GPU, local LLM, renderer stack, or Firejail runtime.
+
+```bash
+python -m pip install "pydantic>=2.5,<3" "pytest>=7.4,<9" "pytest-asyncio>=0.21,<1"
+PYTHONPATH=apps/orchestrator pytest -q \
+  apps/orchestrator/tests/test_portfolio_contract.py \
+  apps/orchestrator/tests/test_sandbox_runtime_contract.py
+```
+
+These tests cover fixture semantics, capability reporting, Pydantic model isolation, generated-code policy, path traversal rejection, and the invariant that unavailable/unverified sandbox paths do **not** fall back to host execution.
+
+See [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) for the evidence ladder.
+
+## Demo, fixture, and live data
+
+The UI uses three provenance categories:
+
+- **Demo:** deterministic synthetic values used to exercise presentation behavior.
+- **Fixture:** deterministic backend values used to exercise orchestration semantics.
+- **Live:** values returned by an actual service, renderer, analyzer, or measurement path.
+
+The application shell labels the prototype/demo boundary. Pipeline and system monitoring now query the orchestrator rather than generating pretend telemetry in the browser.
 
 ## Repository map
 
 ```text
-physics-foundry/
+physics-video-genera/
 ├── apps/
-│   ├── gui/              # desktop/web UI
-│   └── orchestrator/     # FastAPI service and pipeline orchestration
-├── packages/
-│   ├── shared/           # shared schemas/types
-│   └── plugins/          # renderer/plugin interfaces
-├── config/               # runtime and renderer configuration
-├── docs/                 # architecture/product/portfolio documentation
-└── scripts/              # setup and development commands
+│   ├── gui/                  # canonical React/Vite interface
+│   └── orchestrator/         # FastAPI service + execution/QA boundaries
+├── packages/                 # shared/plugin-oriented packages
+├── config/                   # runtime / renderer configuration
+├── docs/
+│   ├── CLAIMS.md             # public claim ledger
+│   ├── IMPLEMENTATION_STATUS.md
+│   ├── PORTFOLIO_ROADMAP.md
+│   ├── PRD.md                # product vision, not current capability claim
+│   └── REPRODUCIBILITY.md
+├── scripts/
+├── SECURITY.md
+└── CONTRIBUTING.md
 ```
 
-## Engineering priorities
+## Next proof milestone
 
-1. Complete and retain one real Manim prompt-to-MP4 artifact chain.
-2. Verify generated-code isolation behavior on a real firejail host, including missing-backend and timeout cases.
-3. Add fixture-mode integration coverage for API/job/WebSocket lifecycle semantics.
-4. Persist a reference run containing prompt, scene plan, generated source, command/exit status, logs, MP4, and measured QA.
-5. Expand the verified path to additional rendering engines only after the Manim path is reproducible.
+The highest-value next step is intentionally narrow:
 
-## Limitations
+```text
+bounded prompt
+    ↓
+schema-valid scene plan
+    ↓
+generated Manim source persisted before execution
+    ↓
+sandboxed renderer invocation
+    ↓
+non-empty MP4
+    ↓
+real quality measurement
+    ↓
+retained plan + source + command + logs + artifact + QA
+```
 
-- Multi-engine autonomous generation is experimental.
-- A renderer interface does not imply that every renderer path is end-to-end complete.
-- Static generated-code validation does not make untrusted code safe without a real isolation backend.
-- Quality-analysis interfaces and thresholds do not establish guaranteed visual or pedagogical quality.
-- Local LLM, GPU, Blender, Taichi, Manim, FFmpeg, LaTeX, and sandbox-tool availability varies by machine.
-- The repository is a research/engineering prototype, not a hosted production service.
+Once that chain is reproducible from a clean checkout, it becomes the reference portfolio artifact. Additional renderer breadth comes after that proof, not before it.
 
-## Why this repository exists
+## Public claim rule
 
-The project is primarily an exercise in software architecture for scientific-media generation: typed orchestration, asynchronous progress reporting, renderer abstraction, explicit failure semantics, generated-code isolation boundaries, quality gates, observability, and human-reviewable artifacts.
+A capability is promoted only when the evidence matches the wording. Interfaces, TODOs, installed binaries, architecture diagrams, fixture values, randomized/synthetic output, and planned integrations are not treated as proof of end-to-end behavior.
 
-That architecture is the current demonstrated value. Autonomous production-grade generation is the target, not a claim.
+That constraint is intentional. A smaller verified system is more valuable than a larger imaginary one.
 
 ## License
 
