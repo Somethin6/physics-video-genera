@@ -154,7 +154,7 @@ async def system_status():
         mode="fixture" if fixture_mode_enabled() else "prototype",
         ocio_config=ocio_config if ocio_available else None,
         gpu_available=capabilities["nvidia_smi"],
-        sandbox_ready=capabilities["sandbox_binary_available"],
+        sandbox_ready=capabilities["sandbox_execution_supported"],
         quality_gates_enabled=True,
         capabilities=capabilities,
         observability={
@@ -453,7 +453,7 @@ async def update_pipeline_status(
     operation: str,
     level: LogLevel = LogLevel.INFO,
 ):
-    """Update pipeline status and broadcast to clients."""
+    """Update status and broadcast it."""
 
     if pipeline_id not in active_pipelines:
         return
@@ -462,7 +462,7 @@ async def update_pipeline_status(
     pipeline.status = status
     pipeline.current_step = current_step
     pipeline.total_steps = total_steps
-    pipeline.progress = (current_step / total_steps) * 100 if total_steps else 0.0
+    pipeline.progress = (current_step / total_steps) * 100
     pipeline.current_operation = operation
     pipeline.updated_at = datetime.utcnow()
     pipeline.logs.append(
@@ -486,26 +486,16 @@ async def update_pipeline_status(
 
 @app.get("/")
 async def root():
-    """Root endpoint with scope-accurate service information."""
+    """Describe the service without claiming unavailable execution paths."""
 
     return {
         "service": "Physics Foundry Orchestrator",
         "version": "0.3.0",
         "status": "prototype",
         "mode": "fixture" if fixture_mode_enabled() else "prototype",
-        "implemented_interfaces": [
-            "observability",
-            "quality_gate_endpoint",
-            "sandboxed_code_endpoint",
-            "websocket_pipeline_events",
-            "capability_reporting",
-        ],
-        "verified_prompt_to_render": False,
-        "endpoints": {
-            "health": "/health",
-            "status": "/status",
-            "capabilities": "/capabilities",
-            "metrics": "/metrics",
-            "websocket": "/ws/pipeline/{pipeline_id}",
-        },
+        "capabilities_endpoint": "/capabilities",
+        "note": (
+            "The service exposes orchestration, observability, sandbox, and quality infrastructure. "
+            "Real prompt-to-render completion is reported only when that path is verified."
+        ),
     }
