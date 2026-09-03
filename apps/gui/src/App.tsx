@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import ProjectDashboard from '@/components/ProjectDashboard'
-import ProjectCreation from '@/components/ProjectCreation'
+import ProjectCreation, { ProjectDraft } from '@/components/ProjectCreation'
 import SystemMonitor from '@/components/SystemMonitor'
 import RenderPreview from '@/components/RenderPreview'
 import QAAnalysisDashboard from '@/components/QAAnalysisDashboard'
@@ -33,9 +33,7 @@ function App() {
   )
   const [currentRequest, setCurrentRequest] = useState<PhysicsVideoRequest | null>(null)
 
-  const createProject = (
-    projectData: Omit<Project, 'id' | 'createdAt' | 'status' | 'progress'>,
-  ) => {
+  const createProject = (projectData: ProjectDraft) => {
     const newProject: Project = {
       ...projectData,
       id: `project-${Date.now()}`,
@@ -93,7 +91,7 @@ function App() {
 
             <Button onClick={() => setShowCreateProject(true)} className="gap-2">
               <Plus size={16} />
-              New Project
+              New Request
             </Button>
           </div>
 
@@ -117,7 +115,7 @@ function App() {
       <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="dashboard">Requests</TabsTrigger>
             <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
             <TabsTrigger value="code">Code Review</TabsTrigger>
             <TabsTrigger value="audio">Audio Review</TabsTrigger>
@@ -127,17 +125,7 @@ function App() {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
-            <ProjectDashboard
-              projects={projects}
-              onUpdateProject={(updatedProject) => {
-                setProjects((current) =>
-                  current.map((project) =>
-                    project.id === updatedProject.id ? updatedProject : project,
-                  ),
-                )
-              }}
-              onCreateProject={createProject}
-            />
+            <ProjectDashboard projects={projects} onCreateProject={createProject} />
           </TabsContent>
 
           <TabsContent value="pipeline" className="space-y-6">
