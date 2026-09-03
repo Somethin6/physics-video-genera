@@ -22,29 +22,30 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders the new project action', () => {
+  it('renders the new request action', () => {
     render(<App />)
-    expect(screen.getByRole('button', { name: 'New Project' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'New Request' })).toBeInTheDocument()
   })
 
-  it('opens project creation when the new project action is clicked', async () => {
+  it('opens bounded request creation', async () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'New Project' }))
+    fireEvent.click(screen.getByRole('button', { name: 'New Request' }))
 
     await waitFor(() => {
-      expect(screen.getByText('Create New Physics Video Project')).toBeInTheDocument()
+      expect(screen.getByText('Create Physics Request')).toBeInTheDocument()
+      expect(screen.getByText('local request record')).toBeInTheDocument()
     })
   })
 
-  it('exposes live-service and demo surfaces with explicit labels', () => {
+  it('exposes backend and explicitly labeled review surfaces', () => {
     render(<App />)
 
-    expect(screen.getByRole('tab', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Requests' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Pipeline' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Code Review' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Audio Review' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'QA Demo' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Preview Demo' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Frame Review' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'System' })).toBeInTheDocument()
   })
 })
