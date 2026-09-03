@@ -32,7 +32,6 @@ function App() {
     'current-qa-sequence',
     demoRenderSequence,
   )
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [currentRequest, setCurrentRequest] = useState<PhysicsVideoRequest | null>(null)
 
   const createProject = (
@@ -168,9 +167,6 @@ function App() {
             <QAAnalysisDashboard
               metrics={demoQAMetrics}
               recentAnalyses={generateDemoFrameAnalyses(20)}
-              isAnalyzing={isAnalyzing}
-              onStartAnalysis={() => setIsAnalyzing(true)}
-              onStopAnalysis={() => setIsAnalyzing(false)}
             />
           </TabsContent>
 
