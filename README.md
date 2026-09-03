@@ -1,88 +1,116 @@
 # Physics Foundry
 
-**Local-first scientific-media orchestration for physics animation.**
+> **Local-first orchestration for generated scientific media.**  
+> A systems-oriented prototype for turning bounded physics requests into typed plans, isolated renderer jobs, inspectable artifacts, and explicit quality evidence.
 
-Physics Foundry is an engineering prototype for turning bounded physics requests into structured plans, generated renderer code, observable jobs, reviewable artifacts, and quality-analysis results. The project is deliberately evidence-first: UI fixtures are labeled as fixtures, missing capabilities fail explicitly, and generated code is never allowed to silently fall back to direct host execution.
+Physics Foundry explores a harder problem than “AI writes animation code”: **how do you make generated scientific media observable, reproducible, and honest about what actually ran?**
 
-> **Status: active prototype.** The architecture and orchestration semantics are real; a retained real prompt → generated Manim → sandbox → MP4 → measured-QA reference run is the next evidence milestone in [issue #17](../../issues/17).
+The project is built around one rule:
 
-## Why this project is interesting
+> **A capability is not real because the UI can draw it. It is real when the execution path and evidence exist.**
 
-Physics Foundry is less about “AI makes a video” and more about the systems problem underneath it:
+**Current status:** active engineering prototype. The orchestration semantics, capability reporting, backend-driven monitoring, generated-code policy, and no-host-fallback sandbox contract are implemented. A retained real prompt → generated Manim → sandbox → MP4 → measured-QA reference run is the next proof milestone.
 
-- **Typed orchestration:** explicit request, status, log, worker, artifact, and terminal-state models.
-- **Evidence-aware execution:** `complete`, `fixture_complete`, `unsupported`, and `error` have different meanings.
-- **Generated-code boundaries:** AST/path policy plus a sandbox wrapper that refuses unsandboxed fallback.
-- **Capability-driven UI:** pipeline and system panels read backend state instead of manufacturing fake progress or hardware telemetry.
-- **Renderer abstraction:** Manim, Taichi, and Blender-oriented interfaces can evolve independently.
-- **Inspectable QA:** synthetic QA used for the interface is deterministic and labeled as demo data rather than presented as measured output.
+---
 
-## Current evidence
+## What is real today
 
-| Area | Current state |
+| Capability | Evidence state |
 | --- | --- |
-| React/Vite GUI | implemented prototype under `apps/gui/` |
-| FastAPI orchestration service | implemented |
-| REST + WebSocket job/status paths | implemented |
-| Dependency/capability reporting | implemented + dependency-light tests |
-| Deterministic fixture planning | implemented + distinct `fixture_complete` state |
-| GUI pipeline monitor | backend-driven, no client-side fake completion |
-| GUI system monitor | backend-driven, no randomized CPU/GPU/model readiness |
-| Generated-code static policy | implemented + contract tests |
-| Direct host fallback | removed by design |
-| Firejail execution wrapper | implemented; hostile/runtime isolation verification still pending |
-| Real prompt → Manim → MP4 → measured QA | **not yet established** |
-| Autonomous production-ready multi-engine generation | **not claimed** |
+| React/Vite portfolio GUI | ✅ implemented in `apps/gui/` |
+| FastAPI orchestration service | ✅ implemented |
+| REST + WebSocket pipeline status paths | ✅ implemented |
+| Explicit capability discovery | ✅ implemented + contract-tested |
+| Deterministic orchestration fixtures | ✅ distinct `fixture_complete` semantics |
+| Backend-driven pipeline monitor | ✅ no client-side fake completion |
+| Backend-driven system monitor | ✅ no randomized hardware/model readiness |
+| Generated-code AST/path policy | ✅ implemented + contract-tested |
+| Direct host execution fallback | ✅ removed by design |
+| Firejail execution wrapper | ◐ implemented; adversarial runtime verification still open |
+| Deterministic QA interface fixture | ◐ implemented and explicitly labeled demo data |
+| Real prompt → renderer → MP4 → measured QA proof | ○ next milestone |
+| Autonomous production-ready multi-engine generation | ○ not claimed |
 
-The detailed claim boundary lives in [`docs/CLAIMS.md`](docs/CLAIMS.md). Implementation status is tracked in [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
+See [`docs/CLAIMS.md`](docs/CLAIMS.md) for the claim ledger and [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md) for the implementation boundary.
 
-## Architecture
+---
+
+## Why the architecture matters
+
+Generated-media prototypes often blur four very different things:
+
+1. a component exists,
+2. a dependency is installed,
+3. a deterministic fixture can exercise the interface,
+4. a real end-to-end operation completed.
+
+Physics Foundry keeps those states separate.
 
 ```mermaid
 flowchart LR
     U[Physics request] --> G[React GUI]
     G --> A[FastAPI orchestrator]
-    A --> P[Typed planning / scene representation]
-    P --> S[Generated-code policy]
-    S --> X[Sandbox boundary]
-    X --> R{Renderer interface}
+    A --> P[Typed planning / scene model]
+    P --> V[Generated-code validation]
+    V --> X[Isolation boundary]
+    X --> R{Renderer adapter}
     R --> M[Manim]
     R --> T[Taichi experimental]
     R --> B[Blender experimental]
-    R --> Q[Quality / artifact tracking]
-    A --> O[Logs / capability status / observability]
+    R --> Q[Artifact + QA evidence]
+    A --> C[Capability / status API]
+    A --> O[Logs + observability]
+    C --> G
     O --> G
     Q --> G
 ```
 
-The key design choice is separation. Planning does not need to know how rendering is implemented; rendering does not get to redefine success semantics; the GUI does not infer capability from decorative state.
+The important separation is semantic as much as architectural:
 
-## Failure semantics
+```text
+planning  != rendering
+installed != verified
+fixture   != live
+UI state  != capability
+success   != “the code reached the end”
+```
 
-Physics Foundry uses explicit terminal meanings:
+---
+
+## Explicit terminal semantics
+
+The backend does not collapse every terminal outcome into “success.”
 
 | State | Meaning |
 | --- | --- |
-| `complete` | a real supported operation completed |
-| `fixture_complete` | deterministic orchestration fixture completed; **no rendered-media claim** |
+| `complete` | a supported real operation completed |
+| `fixture_complete` | deterministic orchestration fixture completed; **no media-generation claim** |
 | `unsupported` | the required real capability is unavailable or not wired |
 | `error` | a supported operation was attempted and failed |
 
-That distinction replaced earlier prototype behavior that could simulate work and eventually report success.
+This replaced earlier prototype behavior that could simulate work and eventually report completion without producing a real artifact.
+
+---
 
 ## Generated-code boundary
 
 Generated renderer code is treated as untrusted input.
 
-Static validation currently rejects disallowed imports/calls, relative imports, dynamic execution patterns, shell-like execution, absolute staging paths, and parent-path traversal. Those checks are defense-in-depth, not a security boundary by themselves.
+Static policy currently rejects or constrains high-risk behavior including disallowed imports/calls, relative imports, dynamic execution patterns, shell-like execution, absolute staging paths, and parent-path traversal.
 
-Real execution currently requires the supported **Firejail** path. If the isolation backend is unavailable, execution returns `unsupported` instead of running generated Python or Blender code directly on the host. `nsjail` may be detected as installed, but it is not currently treated as a verified execution backend.
+Those checks are defense-in-depth. They are **not** presented as the isolation boundary by themselves.
 
-Runtime adversarial isolation remains an explicit open verification task in [issue #27](../../issues/27) and [`SECURITY.md`](SECURITY.md).
+Real generated-code execution currently requires the supported Firejail path. If that backend is unavailable, Physics Foundry returns `unsupported` instead of silently running generated Python or Blender code directly on the host.
 
-## Quick start
+`nsjail` may be detected as installed, but it is not currently promoted to a verified execution backend.
 
-### GUI
+Runtime isolation hardening remains tracked in [`SECURITY.md`](SECURITY.md) and issue #27.
+
+---
+
+## Run the interface
+
+### 1. GUI
 
 ```bash
 git clone https://github.com/ddelucchi/physics-video-genera.git
@@ -91,9 +119,9 @@ npm install
 npm run dev:gui
 ```
 
-The canonical frontend lives in `apps/gui/`. The repository root is a workspace coordinator, not a second application.
+The canonical frontend is `apps/gui/`. The repository root is a workspace coordinator, not a second application.
 
-### Orchestrator API
+### 2. Orchestrator API
 
 Python 3.11 is the reference interpreter.
 
@@ -114,32 +142,55 @@ POST /api/pipeline/create
 GET  /api/pipeline/{pipeline_id}/status
 ```
 
-The GUI defaults to `http://127.0.0.1:8000` and can be pointed elsewhere with `VITE_ORCHESTRATOR_URL`.
+The GUI defaults to `http://127.0.0.1:8000`. Override with `VITE_ORCHESTRATOR_URL` when needed.
+
+---
 
 ## Dependency-light verification
 
 The portfolio contract intentionally avoids requiring a GPU, local LLM, renderer stack, or Firejail runtime.
 
 ```bash
-python -m pip install "pydantic>=2.5,<3" "pytest>=7.4,<9" "pytest-asyncio>=0.21,<1"
+python -m pip install \
+  "pydantic>=2.5,<3" \
+  "pytest>=7.4,<9" \
+  "pytest-asyncio>=0.21,<1"
+
 PYTHONPATH=apps/orchestrator pytest -q \
   apps/orchestrator/tests/test_portfolio_contract.py \
   apps/orchestrator/tests/test_sandbox_runtime_contract.py
 ```
 
-These tests cover fixture semantics, capability reporting, Pydantic model isolation, generated-code policy, path traversal rejection, and the invariant that unavailable/unverified sandbox paths do **not** fall back to host execution.
+The contract covers:
 
-See [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) for the evidence ladder.
+- fixture-vs-live completion semantics,
+- capability reporting,
+- Pydantic model isolation,
+- generated-code validation,
+- workspace path traversal rejection,
+- sandbox backend selection,
+- and the invariant that unavailable or unverified isolation **never falls back to direct host execution**.
 
-## Demo, fixture, and live data
+For the full evidence ladder, see [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md).
 
-The UI uses three provenance categories:
+---
 
-- **Demo:** deterministic synthetic values used to exercise presentation behavior.
-- **Fixture:** deterministic backend values used to exercise orchestration semantics.
-- **Live:** values returned by an actual service, renderer, analyzer, or measurement path.
+## Demo, fixture, and live provenance
 
-The application shell labels the prototype/demo boundary. Pipeline and system monitoring now query the orchestrator rather than generating pretend telemetry in the browser.
+Physics Foundry uses three explicit provenance classes:
+
+**Demo**  
+Deterministic synthetic values used to exercise interface behavior.
+
+**Fixture**  
+Deterministic backend values used to exercise orchestration semantics.
+
+**Live**  
+Values returned by an actual service, renderer, analyzer, or measurement path.
+
+The GUI labels this boundary. The pipeline and system monitors query the orchestrator instead of generating pretend telemetry in the browser.
+
+---
 
 ## Repository map
 
@@ -148,22 +199,24 @@ physics-video-genera/
 ├── apps/
 │   ├── gui/                  # canonical React/Vite interface
 │   └── orchestrator/         # FastAPI service + execution/QA boundaries
-├── packages/                 # shared/plugin-oriented packages
-├── config/                   # runtime / renderer configuration
+├── packages/                 # shared / plugin-oriented packages
+├── config/                   # runtime and renderer configuration
 ├── docs/
 │   ├── CLAIMS.md             # public claim ledger
 │   ├── IMPLEMENTATION_STATUS.md
 │   ├── PORTFOLIO_ROADMAP.md
-│   ├── PRD.md                # product vision, not current capability claim
+│   ├── PRD.md                # product vision, not a capability claim
 │   └── REPRODUCIBILITY.md
 ├── scripts/
 ├── SECURITY.md
 └── CONTRIBUTING.md
 ```
 
+---
+
 ## Next proof milestone
 
-The highest-value next step is intentionally narrow:
+The next milestone is intentionally narrow and falsifiable:
 
 ```text
 bounded prompt
@@ -181,13 +234,26 @@ real quality measurement
 retained plan + source + command + logs + artifact + QA
 ```
 
-Once that chain is reproducible from a clean checkout, it becomes the reference portfolio artifact. Additional renderer breadth comes after that proof, not before it.
+Only after that chain is reproducible from a clean checkout does renderer breadth become the priority.
 
-## Public claim rule
+That ordering is deliberate. **Depth of proof beats breadth of placeholders.**
 
-A capability is promoted only when the evidence matches the wording. Interfaces, TODOs, installed binaries, architecture diagrams, fixture values, randomized/synthetic output, and planned integrations are not treated as proof of end-to-end behavior.
+---
 
-That constraint is intentional. A smaller verified system is more valuable than a larger imaginary one.
+## Engineering philosophy
+
+Physics Foundry is being developed with an evidence-first portfolio standard:
+
+- interfaces are not proof,
+- TODOs are not features,
+- installed binaries are not successful integrations,
+- synthetic telemetry is not measurement,
+- deterministic fixtures are not live output,
+- and a process returning zero is not enough to establish a trustworthy result.
+
+A smaller verified system is more useful than a larger imaginary one.
+
+---
 
 ## License
 
