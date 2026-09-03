@@ -16,12 +16,13 @@ import { RenderSequence } from '@/lib/qa-types'
 import { PhysicsVideoRequest } from '@/lib/pipeline-orchestrator'
 import { DATA_PROVENANCE } from '@/lib/dataProvenance'
 import {
-  mockRenderSequence,
-  mockQAMetrics,
-  generateMockFrameAnalyses,
-  mockAnalyzeFrame,
-  mockUploadSequence,
-} from '@/lib/mockQAData'
+  demoAnalyzeFrame,
+  demoCompareFrames,
+  demoQAMetrics,
+  demoRenderSequence,
+  demoUploadSequence,
+  generateDemoFrameAnalyses,
+} from '@/lib/demoQAData'
 
 function App() {
   const [projects, setProjects] = useKV<Project[]>('physics-video-projects', [])
@@ -29,7 +30,7 @@ function App() {
   const [showCreateProject, setShowCreateProject] = useState(false)
   const [currentSequence, setCurrentSequence] = useKV<RenderSequence | null>(
     'current-qa-sequence',
-    mockRenderSequence,
+    demoRenderSequence,
   )
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [currentRequest, setCurrentRequest] = useState<PhysicsVideoRequest | null>(null)
@@ -72,7 +73,7 @@ function App() {
 
   const handleUploadSequence = async (files: FileList) => {
     try {
-      const sequence = await mockUploadSequence(files)
+      const sequence = await demoUploadSequence(files)
       setCurrentSequence(sequence)
       setActiveTab('qa-preview')
     } catch (error) {
@@ -80,13 +81,8 @@ function App() {
     }
   }
 
-  const handleStartAnalysis = () => {
-    setIsAnalyzing(true)
-  }
-
-  const handleStopAnalysis = () => {
-    setIsAnalyzing(false)
-  }
+  const handleStartAnalysis = () => setIsAnalyzing(true)
+  const handleStopAnalysis = () => setIsAnalyzing(false)
 
   return (
     <div className="min-h-screen bg-background">
@@ -129,12 +125,12 @@ function App() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="pipeline">Pipeline Demo</TabsTrigger>
+            <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
             <TabsTrigger value="code">Code Demo</TabsTrigger>
             <TabsTrigger value="audio">Audio Demo</TabsTrigger>
             <TabsTrigger value="qa-analysis">QA Demo</TabsTrigger>
             <TabsTrigger value="qa-preview">Preview Demo</TabsTrigger>
-            <TabsTrigger value="system">System Demo</TabsTrigger>
+            <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -155,7 +151,7 @@ function App() {
             <PipelineMonitor
               request={currentRequest || undefined}
               onComplete={(videoPath) => {
-                console.log('Pipeline demo completion callback:', videoPath)
+                console.log('Real pipeline completion callback:', videoPath)
                 setActiveTab('qa-preview')
               }}
             />
@@ -182,8 +178,8 @@ function App() {
 
           <TabsContent value="qa-analysis" className="space-y-6">
             <QAAnalysisDashboard
-              metrics={mockQAMetrics}
-              recentAnalyses={generateMockFrameAnalyses(20)}
+              metrics={demoQAMetrics}
+              recentAnalyses={generateDemoFrameAnalyses(20)}
               isAnalyzing={isAnalyzing}
               onStartAnalysis={handleStartAnalysis}
               onStopAnalysis={handleStopAnalysis}
@@ -195,45 +191,14 @@ function App() {
               mode="enhanced"
               sequence={currentSequence || undefined}
               onUploadSequence={handleUploadSequence}
-              onAnalyzeFrame={mockAnalyzeFrame}
+              onAnalyzeFrame={demoAnalyzeFrame}
               onBatchAnalysis={async (startFrame, endFrame, config) => {
-                console.log(
-                  'Demo batch analysis:',
-                  startFrame,
-                  endFrame,
-                  config,
-                )
-
-                for (
-                  let frame = startFrame;
-                  frame <= Math.min(endFrame, startFrame + config.batchSize - 1);
-                  frame += 1
-                ) {
-                  await new Promise((resolve) => setTimeout(resolve, 300))
-                  await mockAnalyzeFrame(frame)
+                const finalFrame = Math.min(endFrame, startFrame + config.batchSize - 1)
+                for (let frame = startFrame; frame <= finalFrame; frame += 1) {
+                  await demoAnalyzeFrame(frame)
                 }
               }}
-              onCompareFrames={async (frameA, frameB) => {
-                console.log('Demo frame comparison:', frameA, frameB)
-
-                return {
-                  frameA,
-                  frameB,
-                  ssimScore: 0.85 + Math.random() * 0.1,
-                  differences: [
-                    {
-                      type: 'changed' as const,
-                      region: { x: 100, y: 150, width: 200, height: 100 },
-                      description: 'Demo: mathematical equation updated',
-                    },
-                    {
-                      type: 'added' as const,
-                      region: { x: 300, y: 200, width: 150, height: 75 },
-                      description: 'Demo: annotation layer added',
-                    },
-                  ],
-                }
-              }}
+              onCompareFrames={demoCompareFrames}
             />
           </TabsContent>
 
