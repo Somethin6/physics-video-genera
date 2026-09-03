@@ -72,6 +72,7 @@ jobs:
             apps/orchestrator/orchestrator/core/dsl_models.py \
             apps/orchestrator/orchestrator/core/capabilities.py \
             apps/orchestrator/orchestrator/core/fixtures.py \
+            apps/orchestrator/orchestrator/core/processes.py \
             apps/orchestrator/orchestrator/core/quality_gates.py \
             apps/orchestrator/orchestrator/core/sandbox_policy.py \
             apps/orchestrator/orchestrator/core/sandbox.py \
@@ -83,12 +84,13 @@ jobs:
         run: |
           pytest -q \
             apps/orchestrator/tests/test_portfolio_contract.py \
+            apps/orchestrator/tests/test_process_runner_contract.py \
             apps/orchestrator/tests/test_quality_schema_contract.py \
             apps/orchestrator/tests/test_sandbox_runtime_contract.py
 
       - name: Explain orchestrator scope
         if: always()
         run: |
-          echo "This job verifies dependency-light orchestration, QA schema semantics, and sandbox failure semantics."
+          echo "This job verifies dependency-light orchestration, subprocess timeout semantics, QA schema semantics, and sandbox failure semantics."
           echo "It syntax-checks integration-boundary modules without claiming their external dependencies are available."
           echo "It does not claim GPU, LLM, Manim, Blender, Taichi, FFmpeg/libvmaf, firejail runtime isolation, or end-to-end rendering capability."
