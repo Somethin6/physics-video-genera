@@ -17,7 +17,6 @@ import { PhysicsVideoRequest } from '@/lib/pipeline-orchestrator'
 import { DATA_PROVENANCE } from '@/lib/dataProvenance'
 import {
   demoAnalyzeFrame,
-  demoCompareFrames,
   demoQAMetrics,
   demoRenderSequence,
   demoUploadSequence,
@@ -74,7 +73,7 @@ function App() {
       setCurrentSequence(sequence)
       setActiveTab('qa-preview')
     } catch (error) {
-      console.error('Demo sequence upload failed:', error)
+      console.error('Local sequence selection failed:', error)
     }
   }
 
@@ -123,7 +122,7 @@ function App() {
             <TabsTrigger value="code">Code Review</TabsTrigger>
             <TabsTrigger value="audio">Audio Review</TabsTrigger>
             <TabsTrigger value="qa-analysis">QA Demo</TabsTrigger>
-            <TabsTrigger value="qa-preview">Preview Demo</TabsTrigger>
+            <TabsTrigger value="qa-preview">Frame Review</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
 
@@ -172,17 +171,9 @@ function App() {
 
           <TabsContent value="qa-preview" className="space-y-6">
             <RenderPreview
-              mode="enhanced"
               sequence={currentSequence || undefined}
               onUploadSequence={handleUploadSequence}
               onAnalyzeFrame={demoAnalyzeFrame}
-              onBatchAnalysis={async (startFrame, endFrame, config) => {
-                const finalFrame = Math.min(endFrame, startFrame + config.batchSize - 1)
-                for (let frame = startFrame; frame <= finalFrame; frame += 1) {
-                  await demoAnalyzeFrame(frame)
-                }
-              }}
-              onCompareFrames={demoCompareFrames}
             />
           </TabsContent>
 
