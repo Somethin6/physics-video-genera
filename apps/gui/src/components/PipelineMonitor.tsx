@@ -56,8 +56,8 @@ interface PipelineMonitorProps {
 }
 
 const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ||
-  'http://localhost:8000'
+  (import.meta.env.VITE_ORCHESTRATOR_URL as string | undefined)?.replace(/\/$/, '') ||
+  'http://127.0.0.1:8000'
 
 const EMPTY_STATE: PipelineState = {
   pipeline_id: '',
@@ -197,9 +197,12 @@ const PipelineMonitor: React.FC<PipelineMonitorProps> = ({ request, onComplete }
   }
 
   const getStatusIcon = (status: PipelineStatus) => {
-    if (status === 'complete') return <CheckCircle className="h-4 w-4" />
-    if (status === 'fixture_complete') return <CheckCircle className="h-4 w-4" />
-    if (status === 'error' || status === 'unsupported') return <AlertCircle className="h-4 w-4" />
+    if (status === 'complete' || status === 'fixture_complete') {
+      return <CheckCircle className="h-4 w-4" />
+    }
+    if (status === 'error' || status === 'unsupported') {
+      return <AlertCircle className="h-4 w-4" />
+    }
     if (status === 'idle') return <Clock className="h-4 w-4 text-muted-foreground" />
     return <Activity className="h-4 w-4 animate-pulse" />
   }
@@ -238,24 +241,22 @@ const PipelineMonitor: React.FC<PipelineMonitorProps> = ({ request, onComplete }
             </Button>
           </div>
 
-          {!request && (
+          {!request ? (
             <p className="text-sm text-muted-foreground">
-              Create or select a project before starting a pipeline request.
+              Create a request before starting an orchestrator pipeline.
             </p>
-          )}
+          ) : null}
 
-          {transportError && (
+          {transportError ? (
             <div className="rounded-md border border-border bg-muted/50 p-3 text-sm">
               <div className="font-medium">Orchestrator request failed</div>
               <div className="mt-1 text-muted-foreground">{transportError}</div>
             </div>
-          )}
+          ) : null}
 
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>
-                Step {state.current_step} of {state.total_steps}
-              </span>
+              <span>Step {state.current_step} of {state.total_steps}</span>
               <span>{Math.round(state.progress)}%</span>
             </div>
             <Progress value={state.progress} className="h-2" />
@@ -264,20 +265,20 @@ const PipelineMonitor: React.FC<PipelineMonitorProps> = ({ request, onComplete }
 
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={statusVariant()}>{state.status}</Badge>
-            {state.pipeline_id && <Badge variant="outline">{state.pipeline_id}</Badge>}
+            {state.pipeline_id ? <Badge variant="outline">{state.pipeline_id}</Badge> : null}
           </div>
 
-          {state.status === 'fixture_complete' && (
+          {state.status === 'fixture_complete' ? (
             <p className="text-sm text-muted-foreground">
               Fixture completion verifies orchestration semantics only. It does not represent a rendered video and does not trigger the completion callback.
             </p>
-          )}
+          ) : null}
 
-          {state.status === 'unsupported' && (
+          {state.status === 'unsupported' ? (
             <p className="text-sm text-muted-foreground">
               The backend explicitly reports that a required real capability is not yet wired or available. No simulated success is substituted.
             </p>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 
@@ -304,9 +305,9 @@ const PipelineMonitor: React.FC<PipelineMonitorProps> = ({ request, onComplete }
                       {log.message}
                     </div>
                   ))}
-                  {state.logs.length === 0 && (
+                  {state.logs.length === 0 ? (
                     <p className="font-sans text-sm text-muted-foreground">No backend log entries yet.</p>
-                  )}
+                  ) : null}
                   <div ref={logsEndRef} />
                 </div>
               </ScrollArea>
@@ -336,9 +337,9 @@ const PipelineMonitor: React.FC<PipelineMonitorProps> = ({ request, onComplete }
                     </div>
                   </div>
                 ))}
-                {state.artifacts.length === 0 && (
+                {state.artifacts.length === 0 ? (
                   <p className="py-4 text-center text-muted-foreground">No backend artifacts reported.</p>
-                )}
+                ) : null}
               </div>
             </CardContent>
           </Card>
@@ -350,9 +351,9 @@ const PipelineMonitor: React.FC<PipelineMonitorProps> = ({ request, onComplete }
               <CardTitle>Execution semantics</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>`complete` is reserved for a real completed backend capability.</p>
-              <p>`fixture_complete` means deterministic orchestration testing only.</p>
-              <p>`unsupported` means the backend refused to invent success for an unavailable path.</p>
+              <p><code>complete</code> is reserved for a real completed backend capability.</p>
+              <p><code>fixture_complete</code> means deterministic orchestration testing only.</p>
+              <p><code>unsupported</code> means the backend refused to invent success for an unavailable path.</p>
               <p>This component does not generate CPU/GPU telemetry or client-side render progress.</p>
             </CardContent>
           </Card>
