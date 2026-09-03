@@ -18,6 +18,9 @@ interface ProjectCreationProps {
   onCreateProject: (project: ProjectDraft) => void
 }
 
+const MIN_DURATION_SECONDS = 10
+const MAX_DURATION_SECONDS = 600
+
 export default function ProjectCreation({
   open,
   onOpenChange,
@@ -37,7 +40,13 @@ export default function ProjectCreation({
     event.preventDefault()
     const parsedDuration = Number(duration)
 
-    if (!title.trim() || !topic.trim() || !Number.isFinite(parsedDuration) || parsedDuration <= 0) {
+    if (
+      !title.trim() ||
+      !topic.trim() ||
+      !Number.isInteger(parsedDuration) ||
+      parsedDuration < MIN_DURATION_SECONDS ||
+      parsedDuration > MAX_DURATION_SECONDS
+    ) {
       return
     }
 
@@ -59,7 +68,7 @@ export default function ProjectCreation({
             <Badge variant="outline">local request record</Badge>
           </div>
           <DialogDescription>
-            Capture the bounded request that can be sent to the orchestrator. Renderer/model availability is reported separately by the backend and is not implied by this form.
+            Capture the bounded request accepted by the orchestrator. Renderer/model availability is reported separately by the backend and is not implied by this form.
           </DialogDescription>
         </DialogHeader>
 
@@ -92,14 +101,17 @@ export default function ProjectCreation({
             <Input
               id="project-duration"
               type="number"
-              min="1"
-              max="3600"
+              min={MIN_DURATION_SECONDS}
+              max={MAX_DURATION_SECONDS}
               step="1"
               value={duration}
               onChange={(event) => setDuration(event.target.value)}
               placeholder="60"
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Backend contract: integer duration from {MIN_DURATION_SECONDS} to {MAX_DURATION_SECONDS} seconds.
+            </p>
           </div>
 
           <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
