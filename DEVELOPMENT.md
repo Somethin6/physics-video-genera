@@ -1,362 +1,208 @@
-# Physics Foundry - Complete Development Guide
+# Physics Foundry Development Guide
 
-## 🚀 Quick Start
+This guide describes the repository as it exists today. For product direction, see [`docs/PRD.md`](docs/PRD.md). For capability evidence, see [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md) and [`docs/CLAIMS.md`](docs/CLAIMS.md).
 
-### Prerequisites
-- Node.js 18+ and npm 8+
-- Python 3.11+ with pip
-- Git and modern terminal
-- 8GB+ RAM recommended
-- GPU with 4GB+ VRAM (optional, for rendering)
+## Repository structure
 
-### Installation
+```text
+physics-video-genera/
+├── apps/
+│   ├── gui/                  # canonical React/Vite interface
+│   └── orchestrator/         # FastAPI orchestration service
+├── packages/                 # shared/plugin-oriented packages
+├── config/                   # runtime and renderer configuration
+├── docs/                     # evidence, roadmap, product vision
+├── scripts/                  # development helpers
+├── SECURITY.md
+└── package.json              # workspace coordinator
+```
+
+The repository root is not a second frontend. `apps/gui/` is the canonical GUI source tree.
+
+## Prerequisites
+
+For the dependency-light development path:
+
+- Node.js 18+
+- npm 8+
+- Python 3.11
+- Git
+
+Optional renderer/model/media dependencies are not required for the contract suite. Their availability is reported through the orchestrator capability endpoint.
+
+## Install the GUI
+
+From the repository root:
 
 ```bash
-# Clone the repository
-git clone https://github.com/Somethin6/physics-video-genera.git
-cd physics-video-genera
-
-# Install dependencies
 npm install
-cd apps/gui && npm install
-cd ../orchestrator && pip install -e .
-
-# Start development servers
-npm run dev  # or: just dev-all
 ```
 
-## 🏗️ Architecture Overview
-
-### System Design
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   GUI Client    │    │  Orchestrator   │    │ Render Workers  │
-│  (React/Vite)   │◄──►│   (FastAPI)     │◄──►│ (Blender/Manim)│
-│                 │    │                 │    │                 │
-│ • Project Mgmt  │    │ • Pipeline      │    │ • Video Gen     │
-│ • Quality UI    │    │ • LLM Integration│    │ • Effects       │
-│ • Real-time     │    │ • Media Proc    │    │ • Export        │
-│   Monitoring    │    │ • Error Recovery│    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-          │                       │                       │
-          └───────────────────────┼───────────────────────┘
-                                 │
-                    ┌─────────────────┐
-                    │   Shared Types  │
-                    │   & Validation  │
-                    │                 │
-                    │ • JSON Schema   │
-                    │ • Type Gen      │
-                    │ • Validation    │
-                    └─────────────────┘
-```
-
-### Technology Stack
-
-#### Frontend (GUI)
-- **Framework**: React 19 with TypeScript
-- **Build Tool**: Vite 6.3.5 with SWC
-- **UI Library**: Radix UI + Tailwind CSS 4.1
-- **State**: React Query + KV hooks
-- **Testing**: Vitest + React Testing Library + Playwright
-- **Icons**: Lucide React (consistent icon set)
-- **Performance**: Web Vitals monitoring
-
-#### Backend (Orchestrator)
-- **Framework**: FastAPI with async/await
-- **WebSockets**: Real-time pipeline updates
-- **Media**: OpenTimelineIO + OpenImageIO + FFmpeg
-- **LLM**: OpenAI-compatible API client
-- **Monitoring**: Prometheus + OpenTelemetry
-- **Testing**: Pytest with async support
-- **Error Handling**: Comprehensive recovery system
-
-### Key Features
-
-#### 🎯 Production-Ready Pipeline
-- **Real-time progress tracking** with WebSocket updates
-- **Intelligent error recovery** with 15+ recovery strategies
-- **Multi-engine rendering** (Blender OptiX/CUDA/CPU fallback)
-- **Professional color management** (OCIO with Rec.709/BT.1886)
-
-#### 🔒 Enterprise Security
-- **Input validation** with custom sanitization
-- **Rate limiting** per endpoint and user
-- **CSP headers** and security middleware
-- **Vulnerability scanning** in CI/CD
-
-#### ⚡ Performance Optimized
-- **Bundle splitting** and lazy loading
-- **Image optimization** with WebP/AVIF
-- **Caching strategies** for API and assets
-- **Web Vitals** monitoring (LCP < 2.5s, FID < 100ms)
-
-#### ♿ Accessibility First
-- **WCAG 2.1 AA compliance** verified
-- **Keyboard navigation** throughout
-- **Screen reader** optimized
-- **High contrast** themes
-- **Focus management** in modals
-
-#### 🌍 Internationalization
-- **10 languages** supported (EN, ES, FR, DE, JA, ZH, PT, RU, AR, HI)
-- **RTL support** for Arabic
-- **Number/date formatting** per locale
-- **Dynamic language switching**
-
-## 🛠️ Development Workflow
-
-### Project Structure
-
-```
-physics-foundry/
-├── 📱 apps/
-│   ├── gui/                     # React frontend
-│   │   ├── src/
-│   │   │   ├── components/      # UI components
-│   │   │   │   ├── ui/          # Design system
-│   │   │   │   ├── ErrorBoundary.tsx
-│   │   │   │   └── AccessibilityHelp.tsx
-│   │   │   ├── lib/             # Utilities
-│   │   │   │   ├── security.ts  # Input validation
-│   │   │   │   ├── performance.ts # Monitoring
-│   │   │   │   └── i18n.ts      # Internationalization
-│   │   │   ├── __tests__/       # Unit tests
-│   │   │   └── e2e/             # E2E tests
-│   │   ├── eslint.config.js     # Modern ESLint v9
-│   │   ├── vitest.config.ts     # Test configuration
-│   │   └── playwright.config.ts # E2E configuration
-│   └── orchestrator/            # FastAPI backend
-│       ├── orchestrator/
-│       │   ├── api/            # REST endpoints
-│       │   ├── core/           # Business logic
-│       │   │   ├── error_handling.py  # Recovery system
-│       │   │   ├── media_pipeline.py  # Media processing
-│       │   │   └── dsl_models.py      # Data models
-│       │   └── workers/        # Render workers
-│       └── tests/              # Comprehensive tests
-├── 🔄 .github/workflows/        # CI/CD automation
-│   ├── ci-cd.yml              # Main pipeline
-│   └── maintenance.yml        # Automated maintenance
-├── 📚 docs/                    # Documentation
-├── 🔧 scripts/                # Development tools
-└── 🎨 config/                 # Configuration files
-```
-
-### Development Commands
+Run the GUI:
 
 ```bash
-# Development
-npm run dev              # Start GUI dev server
-npm run dev:api         # Start API dev server
-npm run dev:all         # Start all services
-
-# Building
-npm run build           # Build all components
-npm run build:gui       # Build GUI only
-npm run build:api       # Build API only
-
-# Testing
-npm run test            # Run all tests
-npm run test:unit       # Unit tests only
-npm run test:e2e        # E2E tests with Playwright
-npm run test:coverage   # With coverage report
-
-# Code Quality
-npm run lint            # Lint all code
-npm run lint:fix        # Auto-fix linting issues
-npm run format          # Format code with Prettier
-npm run type-check      # TypeScript type checking
-
-# Security
-npm audit               # Check for vulnerabilities
-npm run security-scan   # Comprehensive security check
-
-# Performance
-npm run build:analyze   # Bundle size analysis
-npm run lighthouse      # Performance audit
+npm run dev:gui
 ```
 
-### Git Workflow
+Build it:
 
 ```bash
-# Feature development
-git checkout -b feature/awesome-feature
-git commit -m "feat: add awesome feature"
-git push origin feature/awesome-feature
-
-# Create PR via GitHub
-# CI/CD automatically runs:
-# - Security scanning
-# - Linting and formatting
-# - Unit + integration tests
-# - E2E tests across browsers
-# - Performance testing
-# - Bundle size analysis
+npm run build:gui
 ```
 
-## 🧪 Testing Strategy
-
-### Test Pyramid
-
-```
-      ┌─────────────────┐
-     ┌┴─────────────────┴┐    E2E Tests (10%)
-    ┌┴───────────────────┴┐   - Full user workflows
-   ┌┴─────────────────────┴┐  - Cross-browser testing
-  ┌┴───────────────────────┴┐ - Performance validation
- ┌┴─────────────────────────┴┐
-┌┴───────────────────────────┴┐ Unit Tests (70%)
-└┬───────────────────────────┬┘ - Individual functions
- └┬─────────────────────────┬┘  - Component isolation
-  └┬───────────────────────┬┘   - Fast execution
-   └┬─────────────────────┬┘
-    └┬───────────────────┬┘
-     └┴─────────────────┴┘
-```
-
-### Test Coverage
-
-- **Unit Tests**: 90%+ coverage target
-- **Integration Tests**: 80%+ coverage
-- **E2E Tests**: Critical user paths
-- **Performance Tests**: Core Web Vitals
-- **Security Tests**: OWASP Top 10
-
-### Quality Gates
-
-All PRs must pass:
-1. ✅ Security scan (no high/critical vulnerabilities)
-2. ✅ Linting (no errors, warnings < 10)
-3. ✅ Type checking (strict TypeScript)
-4. ✅ Unit tests (90%+ coverage)
-5. ✅ E2E tests (all critical paths)
-6. ✅ Performance budget (bundle size < 2MB)
-7. ✅ Accessibility audit (WCAG AA)
-
-## 🚀 Deployment
-
-### Environment Configuration
+Run GUI tests:
 
 ```bash
-# Development
-NODE_ENV=development
-API_URL=http://localhost:8000
-VITE_LOG_LEVEL=debug
-
-# Staging  
-NODE_ENV=staging
-API_URL=https://api-staging.physics-foundry.com
-VITE_ANALYTICS=false
-
-# Production
-NODE_ENV=production
-API_URL=https://api.physics-foundry.com
-VITE_ANALYTICS=true
-VITE_ERROR_REPORTING=true
+npm run test:gui
 ```
 
-### CI/CD Pipeline
+Lint and formatting checks:
 
-```yaml
-# Automated workflow:
-Code Push → Security Scan → Build → Test → Deploy
-     ↓           ↓           ↓       ↓       ↓
-  GitHub    → Trivy     → Vite    → Jest → Staging
-  Actions     CodeQL      Docker    E2E    Production
-                                   ↓
-                              Performance
-                              Monitoring
-```
-
-### Monitoring & Observability
-
-- **Application Performance**: Web Vitals, bundle analysis
-- **Error Tracking**: Comprehensive error boundaries
-- **User Analytics**: Privacy-respecting metrics
-- **Infrastructure**: Prometheus + Grafana dashboards
-- **Logs**: Structured logging with correlation IDs
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-#### Build Failures
 ```bash
-# Clear caches
-rm -rf node_modules package-lock.json
-npm install
-
-# Reset TypeScript cache
-rm -rf apps/gui/.tsbuildinfo
-npm run type-check
+npm run lint
+npm run format:check
 ```
 
-#### Test Failures
+## Install the orchestrator
+
+The full orchestrator package contains optional/heavier media and AI dependencies. From the repository root:
+
 ```bash
-# Update test snapshots
-npm run test -- --updateSnapshot
-
-# Debug specific test
-npm run test -- --debug test-name
+cd apps/orchestrator
+python -m pip install -e .
 ```
 
-#### Performance Issues
+Run the service:
+
 ```bash
-# Analyze bundle size
-npm run build:analyze
-
-# Profile render performance
-npm run lighthouse -- --only-categories=performance
+python -m uvicorn orchestrator.main:app --reload --port 8000
 ```
 
-### Getting Help
+Or, after installation, from the repository root:
 
-1. **Documentation**: Check `/docs` folder
-2. **Issues**: Search existing GitHub issues  
-3. **Discussions**: GitHub Discussions for questions
-4. **Community**: Discord server for real-time help
+```bash
+npm run dev:api
+```
 
-## 📈 Roadmap
+Useful endpoints:
 
-### Phase 1: Foundation ✅
-- [x] Core architecture and build system
-- [x] Modern tooling (Vite, ESLint, TypeScript)
-- [x] Comprehensive testing infrastructure
-- [x] Security framework and validation
-- [x] Error handling and recovery
-- [x] CI/CD automation
+```text
+GET  /health
+GET  /status
+GET  /capabilities
+GET  /metrics
+POST /api/pipeline/create
+GET  /api/pipeline/{pipeline_id}/status
+```
 
-### Phase 2: Advanced Features (Current)
-- [ ] Advanced LLM integrations
-- [ ] Real-time collaboration
-- [ ] Plugin architecture
-- [ ] Advanced analytics
-- [ ] Mobile app development
+The GUI uses `http://127.0.0.1:8000` by default. Override it with:
 
-### Phase 3: Scale & Polish
-- [ ] Multi-tenant architecture
-- [ ] Advanced caching strategies
-- [ ] Edge deployment
-- [ ] Enterprise SSO
-- [ ] Compliance certifications (SOC2, GDPR)
+```bash
+VITE_ORCHESTRATOR_URL=http://127.0.0.1:8000 npm run dev:gui
+```
 
-## 🤝 Contributing
+## Dependency-light contract tests
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
+These tests are intentionally runnable without GPU, renderer, local-model, FFmpeg, or Firejail runtime dependencies.
 
-### Quick Contribution Steps
+```bash
+python -m pip install \
+  "pydantic>=2.5,<3" \
+  "pytest>=7.4,<9" \
+  "pytest-asyncio>=0.21,<1"
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Follow code standards (auto-enforced by pre-commit hooks)
-4. Add tests for new features
-5. Ensure all quality gates pass
-6. Submit PR with clear description
+PYTHONPATH=apps/orchestrator pytest -q \
+  apps/orchestrator/tests/test_portfolio_contract.py \
+  apps/orchestrator/tests/test_sandbox_runtime_contract.py
+```
 
----
+They verify semantics such as:
 
-**Built with ❤️ by the Physics Foundry team**
+- explicit fixture-mode opt-in;
+- deterministic fixture planning;
+- capability reporting;
+- isolation of Pydantic mutable defaults;
+- distinct `fixture_complete`, `unsupported`, `complete`, and `error` states;
+- generated-code import/call restrictions;
+- staging-path traversal rejection;
+- no direct host-execution fallback when sandbox support is absent or unverified.
 
-*Making physics education accessible through AI-powered video generation*
+## Data provenance in the GUI
+
+The frontend distinguishes three sources of displayed data:
+
+- **demo:** deterministic synthetic values for presentation/UI development;
+- **fixture:** deterministic backend values for orchestration tests;
+- **live:** values returned by an actual backend, renderer, analyzer, or measurement source.
+
+Do not introduce randomized telemetry or simulated readiness that visually resembles a live measurement. New panels should either use real backend state or label their data source explicitly.
+
+## Adding a capability
+
+A new integration should move through these stages:
+
+```text
+interface
+  ↓
+explicit unsupported behavior
+  ↓
+deterministic tests
+  ↓
+real external execution
+  ↓
+retained artifact / benchmark
+  ↓
+public claim promotion
+```
+
+Do not skip from “interface exists” to “production-ready.”
+
+## Generated-code execution
+
+Generated Python/renderer code is untrusted input.
+
+The current execution contract requires the supported Firejail path. Static AST/path checks are defense-in-depth and do not replace runtime isolation. If the required sandbox backend is unavailable, the correct result is `unsupported`, not direct host execution.
+
+Before promoting the sandbox to verified runtime isolation, test it on an appropriate Linux host for:
+
+- network denial;
+- environment/secret stripping;
+- filesystem boundaries;
+- path traversal;
+- process-tree timeout termination;
+- output confinement;
+- missing-backend behavior;
+- Blender/Python no-fallback behavior.
+
+See [`SECURITY.md`](SECURITY.md) and issue #27.
+
+## Reference artifact discipline
+
+The highest-priority engineering milestone is issue #17. A reference run should retain:
+
+```text
+prompt
+scene plan
+generated source
+execution command
+exit status
+logs
+rendered MP4
+quality measurement
+configuration / dependency notes
+```
+
+A fixture or UI demo does not substitute for that artifact chain.
+
+## Pull-request discipline
+
+Before merging a capability change:
+
+1. update or add tests;
+2. verify failure semantics;
+3. remove or label synthetic output;
+4. update `docs/IMPLEMENTATION_STATUS.md` when the implementation state changes;
+5. update `docs/CLAIMS.md` only when the evidence supports stronger public wording;
+6. keep README instructions reproducible from a clean checkout.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the public contribution rule.
