@@ -1,31 +1,46 @@
-Thanks for helping make GitHub safe for everyone.
-
 # Security
 
-GitHub takes the security of our software products and services seriously, including all of the open source code repositories managed through our GitHub organizations, such as [GitHub](https://github.com/GitHub).
+Physics Foundry is an active research/engineering prototype. It includes code paths intended to execute generated renderer source, which must be treated as untrusted input.
 
-Even though [open source repositories are outside of the scope of our bug bounty program](https://bounty.github.com/index.html#scope) and therefore not eligible for bounty rewards, we will ensure that your finding gets passed along to the appropriate maintainers for remediation. 
+## Current security boundary
 
-## Reporting Security Issues
+The generated-code path now separates three layers:
 
-If you believe you have found a security vulnerability in any GitHub-owned repository, please report it to us through coordinated disclosure.
+1. dependency-light static policy checks (`core/sandbox_policy.py`);
+2. explicit capability detection (`core/capabilities.py`);
+3. an isolation wrapper (`core/sandbox.py`) that refuses direct host execution when the supported backend is unavailable.
 
-**Please do not report security vulnerabilities through public GitHub issues, discussions, or pull requests.**
+Static analysis is defense-in-depth only. It does **not** make arbitrary Python safe to execute. The repository is **not claimed to be hardened for hostile multi-tenant execution**.
 
-Instead, please send an email to opensource-security[@]github.com.
+## Current invariants
 
-Please include as much of the information listed below as you can to help us better understand and resolve the issue:
+- fixture/test completion is distinct from real execution completion;
+- missing generated-code isolation returns `unsupported` instead of running directly on the host;
+- the current execution wrapper treats firejail as the supported backend contract;
+- nsjail may be detected as installed but is not currently used as a verified execution path;
+- Blender has no direct-execution fallback when sandbox support is unavailable;
+- staged auxiliary files reject absolute paths and `..` traversal;
+- generated Python receives conservative import/call policy checks before execution;
+- child execution is launched with a stripped environment rather than inheriting arbitrary host secrets;
+- the firejail profile disables network access and applies resource/process restrictions;
+- arbitrary external Blender input/output host paths are not currently staged through the sandbox boundary.
 
-  * The type of issue (e.g., buffer overflow, SQL injection, or cross-site scripting)
-  * Full paths of source file(s) related to the manifestation of the issue
-  * The location of the affected source code (tag/branch/commit or direct URL)
-  * Any special configuration required to reproduce the issue
-  * Step-by-step instructions to reproduce the issue
-  * Proof-of-concept or exploit code (if possible)
-  * Impact of the issue, including how an attacker might exploit the issue
+## Remaining verification work
 
-This information will help us triage your report more quickly.
+The implementation still requires real-host verification of firejail behavior, including:
 
-## Policy
+- absence of the firejail binary;
+- timeout/process-tree handling;
+- filesystem visibility from inside the sandbox;
+- environment-variable isolation;
+- network isolation;
+- artifact retention and cleanup;
+- renderer-specific behavior under headless execution.
 
-See [GitHub's Safe Harbor Policy](https://docs.github.com/en/site-policy/security-policies/github-bug-bounty-program-legal-safe-harbor#1-safe-harbor-terms)
+That work is tracked in issue #27. Until it is complete, describe the sandbox as a prototype isolation boundary, not a hardened security product.
+
+## Reporting a vulnerability
+
+Please use GitHub's private vulnerability-reporting mechanism if it is enabled for this repository. If private reporting is unavailable, contact the repository owner privately rather than publishing exploit details in a public issue.
+
+Include the affected file/path, environment assumptions, reproduction steps, and expected impact. Do not include real secrets, credentials, or third-party private data in reports.
