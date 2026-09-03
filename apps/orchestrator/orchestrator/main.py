@@ -51,7 +51,6 @@ class SystemStatus(BaseModel):
     timestamp: datetime
     version: str
     mode: str
-    ocio_config: Optional[str] = None
     gpu_available: bool = False
     sandbox_ready: bool = False
     quality_gates_enabled: bool = True
@@ -67,11 +66,11 @@ websocket_connections: List[WebSocket] = []
 async def lifespan(app: FastAPI):
     """Application lifecycle management."""
 
+    del app
     logger.info("Starting Physics Foundry Orchestrator")
 
     setup_observability_stack(
-        prometheus_port=9090,
-        jaeger_endpoint=os.getenv("JAEGER_ENDPOINT", "http://localhost:14268/api/traces"),
+        jaeger_endpoint=os.getenv("JAEGER_ENDPOINT"),
         sentry_dsn=os.getenv("SENTRY_DSN"),
     )
 
@@ -81,12 +80,17 @@ async def lifespan(app: FastAPI):
         "fixture" if fixture_mode_enabled() else "prototype",
     )
 
-    yield
-
-    logger.info("Shutting down Physics Foundry Orchestrator")
-    system_monitor.stop_monitoring()
-    monitor_task.cancel()
-    sandbox_manager.cleanup_all()
+    try:
+        yield
+    finally:
+        logger.info("Shutting down Physics Foundry Orchestrator")
+        system_monitor.stop_monitoring()
+        monitor_task.cancel()
+        try:
+            await monitor_task
+        except asyncio.CancelledError:
+            pass
+        sandbox_manager.cleanup_all()
 
 
 app = FastAPI(
@@ -121,23 +125,19 @@ async def system_status():
     """Return explicit dependency/capability status."""
 
     capabilities = capability_matrix()
-    ocio_config = os.getenv("OCIO")
-    ocio_available = bool(ocio_config and Path(ocio_config).exists())
-
     return SystemStatus(
         status="prototype",
         timestamp=datetime.utcnow(),
         version="0.3.0",
         mode="fixture" if fixture_mode_enabled() else "prototype",
-        ocio_config=ocio_config if ocio_available else None,
         gpu_available=capabilities["nvidia_smi"],
         sandbox_ready=capabilities["sandbox_execution_supported"],
         quality_gates_enabled=True,
         capabilities=capabilities,
         observability={
             "prometheus": True,
-            "tracing": observability_manager.tracer is not None,
-            "sentry": os.getenv("SENTRY_DSN") is not None,
+            "tracing": observability_manager.tracing_configured,
+            "sentry": observability_manager.sentry_configured,
         },
     )
 
@@ -199,7 +199,7 @@ async def create_pipeline(request: SceneRequest, background_tasks: BackgroundTas
         {
             "type": "pipeline_created",
             "pipeline_id": pipeline_id,
-            "data": pipeline_status.dict(),
+            "data": pipeline_status.model_dump(),
         }
     )
     pipeline_operations_total.labels(operation="create_pipeline", status="started").inc()
@@ -222,7 +222,7 @@ async def get_pipeline_status(pipeline_id: str):
 
 @app.post("/api/pipeline/{pipeline_id}/quality-check")
 async def run_quality_check(pipeline_id: str, frame_paths: List[str]):
-    """Run real quality analysis on caller-supplied frame paths."""
+    """Run measured frame statistics on caller-supplied paths."""
 
     if pipeline_id not in active_pipelines:
         raise HTTPException(status_code=404, detail="Pipeline not found")
@@ -242,7 +242,7 @@ async def run_quality_check(pipeline_id: str, frame_paths: List[str]):
             PipelineLogEntry(
                 timestamp=datetime.utcnow(),
                 level=LogLevel.INFO if gate_passed else LogLevel.WARN,
-                message=f"Quality check {'passed' if gate_passed else 'failed'}",
+                message=f"Frame heuristic gate {'passed' if gate_passed else 'failed'}",
                 component="quality_gate",
                 metadata={"frames_analyzed": len(analyses), "gate_passed": gate_passed},
             )
@@ -251,7 +251,7 @@ async def run_quality_check(pipeline_id: str, frame_paths: List[str]):
         payload = {
             "pipeline_id": pipeline_id,
             "gate_passed": gate_passed,
-            "frame_analyses": [analysis.dict() for analysis in analyses],
+            "frame_analyses": [analysis.model_dump() for analysis in analyses],
         }
         await broadcast_pipeline_event(
             {
@@ -279,9 +279,10 @@ async def execute_code_safely(
     with operation_duration_seconds.labels(operation="code_execution").time():
         try:
             result = await execute_safe_code(code, code_type, timeout)
+            metric_status = str(result.get("status", "error"))
             pipeline_operations_total.labels(
                 operation="code_execution",
-                status="success" if result["success"] else "error",
+                status=metric_status,
             ).inc()
             return result
         except Exception as exc:
@@ -303,7 +304,7 @@ async def pipeline_websocket(websocket: WebSocket, pipeline_id: str):
                 {
                     "type": "pipeline_status",
                     "pipeline_id": pipeline_id,
-                    "data": active_pipelines[pipeline_id].dict(),
+                    "data": active_pipelines[pipeline_id].model_dump(),
                 }
             )
         while True:
@@ -456,7 +457,7 @@ async def update_pipeline_status(
         {
             "type": "pipeline_status_update",
             "pipeline_id": pipeline_id,
-            "data": pipeline.dict(),
+            "data": pipeline.model_dump(),
         }
     )
 
@@ -472,7 +473,7 @@ async def root():
         "mode": "fixture" if fixture_mode_enabled() else "prototype",
         "capabilities_endpoint": "/capabilities",
         "note": (
-            "The service exposes orchestration, observability, sandbox, and quality infrastructure. "
+            "The service exposes orchestration, observability, sandbox, and measured frame-QA infrastructure. "
             "Real prompt-to-render completion is reported only when that path is verified."
         ),
     }
