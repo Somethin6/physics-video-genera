@@ -11,6 +11,39 @@ permissions:
   contents: read
 
 jobs:
+  gui-contract:
+    name: GUI contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install locked JavaScript dependencies
+        run: npm ci
+
+      - name: Typecheck reachable GUI
+        run: npm run typecheck --workspace=@physics-foundry/gui
+
+      - name: Run GUI smoke tests
+        run: npm run test --workspace=@physics-foundry/gui
+
+      - name: Build GUI
+        run: npm run build --workspace=@physics-foundry/gui
+
+      - name: Explain GUI scope
+        if: always()
+        run: |
+          echo "This job verifies the reachable React/TypeScript GUI graph, smoke tests, and Vite build."
+          echo "It does not establish renderer, GPU, local-model, sandbox-runtime, or end-to-end video capability."
+
   orchestrator-contract:
     name: Orchestrator contract
     runs-on: ubuntu-latest
@@ -50,7 +83,7 @@ jobs:
             apps/orchestrator/tests/test_portfolio_contract.py \
             apps/orchestrator/tests/test_sandbox_runtime_contract.py
 
-      - name: Explain CI scope
+      - name: Explain orchestrator scope
         if: always()
         run: |
           echo "This job verifies dependency-light orchestration and sandbox failure semantics."
