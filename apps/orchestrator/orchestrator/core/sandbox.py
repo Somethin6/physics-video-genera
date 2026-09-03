@@ -14,7 +14,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .observability import process_manager
+from .processes import process_manager
 from .sandbox_policy import (
     command_available,
     validate_python_source,
