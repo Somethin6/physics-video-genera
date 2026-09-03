@@ -66,14 +66,16 @@ jobs:
             "pytest>=7.4,<9" \
             "pytest-asyncio>=0.21,<1"
 
-      - name: Compile portfolio contract modules
+      - name: Compile contract and integration-boundary modules
         run: |
           python -m py_compile \
             apps/orchestrator/orchestrator/core/dsl_models.py \
             apps/orchestrator/orchestrator/core/capabilities.py \
             apps/orchestrator/orchestrator/core/fixtures.py \
+            apps/orchestrator/orchestrator/core/quality_gates.py \
             apps/orchestrator/orchestrator/core/sandbox_policy.py \
-            apps/orchestrator/orchestrator/core/sandbox.py
+            apps/orchestrator/orchestrator/core/sandbox.py \
+            apps/orchestrator/orchestrator/main.py
 
       - name: Run dependency-light contracts
         env:
@@ -81,10 +83,12 @@ jobs:
         run: |
           pytest -q \
             apps/orchestrator/tests/test_portfolio_contract.py \
+            apps/orchestrator/tests/test_quality_schema_contract.py \
             apps/orchestrator/tests/test_sandbox_runtime_contract.py
 
       - name: Explain orchestrator scope
         if: always()
         run: |
-          echo "This job verifies dependency-light orchestration and sandbox failure semantics."
-          echo "It does not claim GPU, LLM, Manim, Blender, Taichi, FFmpeg, firejail runtime isolation, or end-to-end rendering capability."
+          echo "This job verifies dependency-light orchestration, QA schema semantics, and sandbox failure semantics."
+          echo "It syntax-checks integration-boundary modules without claiming their external dependencies are available."
+          echo "It does not claim GPU, LLM, Manim, Blender, Taichi, FFmpeg/libvmaf, firejail runtime isolation, or end-to-end rendering capability."
