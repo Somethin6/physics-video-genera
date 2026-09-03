@@ -1,13 +1,23 @@
-# Demo-data boundary
+# GUI data-provenance boundary
 
-The GUI contains prototype views that were originally built with simulated telemetry, mock QA values, canned analysis, and synthetic progress updates. Those values are useful for interface development, but they are not measurements from the FastAPI service, render workers, GPU, local model, or quality pipeline.
+Physics Foundry deliberately separates presentation fixtures from service-backed state.
 
-Until each view is connected to a real source, the interface must make the distinction visible:
+- **Demo:** deterministic synthetic values used to exercise interface behavior. Demo values are not measurements.
+- **Fixture:** deterministic backend/test values used to verify orchestration semantics. Fixture completion is not rendered-media completion.
+- **Live:** values returned by an actual service, renderer, analyzer, local browser resource, or measurement path.
 
-- **Demo/mock**: synthetic values used to exercise UI behavior.
-- **Fixture**: deterministic test data used to verify orchestration semantics.
-- **Live**: values received from an actual service/worker/measurement path.
+Current GUI boundary:
 
-A component may not label random, delayed, or canned values as live system telemetry. A successful demo interaction may not be surfaced as evidence that the underlying backend capability exists.
+| Surface | Provenance |
+| --- | --- |
+| Request ledger | local UI records |
+| Pipeline | live orchestrator REST state when the service is reachable |
+| System | live `/status` + `/capabilities` state when the service is reachable |
+| Code review | deterministic demo revisions |
+| Audio review | real local browser playback + deterministic alignment fixture |
+| QA dashboard | deterministic demo metrics |
+| Frame review | real local browser image preview + deterministic QA fixture |
 
-The canonical frontend is `apps/gui/`. The older root-level `src/` frontend is legacy duplicate code and is being removed during portfolio hardening.
+A component may not label random, delayed, canned, or hard-coded values as live telemetry. A successful demo interaction may not be surfaced as evidence that the underlying backend capability exists.
+
+The canonical frontend is `apps/gui/`. The old root-level duplicate frontend and unreachable enhanced prototype screens have been removed from the hardening branch.
