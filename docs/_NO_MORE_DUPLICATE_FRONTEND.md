@@ -1,1 +1,0 @@
-Temporary audit marker: remove this file before merge. The next tree operation deletes the legacy root frontend and this marker should not survive the final PR.
