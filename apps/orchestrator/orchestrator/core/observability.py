@@ -8,24 +8,13 @@ metrics exporters, Sentry, or GPU monitoring packages.
 from __future__ import annotations
 
 import asyncio
+import functools
+import inspect
 import logging
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Dict, Optional
 
-import opentelemetry.trace as trace
-import sentry_sdk
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from prometheus_client import Counter, Gauge, Histogram
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from tenacity import (
-    before_sleep_log,
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential_jitter,
-)
 
 from .processes import ProcessTimeoutError, process_manager
 
@@ -58,7 +47,7 @@ retry_attempts_total = Counter(
 
 
 class RetryableOperation:
-    """Small Tenacity adapter for explicitly retryable integration calls."""
+    """Dependency-light retry adapter for explicitly retryable integrations."""
 
     @staticmethod
     def with_backoff(
@@ -68,17 +57,58 @@ class RetryableOperation:
         exceptions: tuple = (Exception,),
     ):
         def decorator(func):
-            return retry(
-                stop=stop_after_attempt(max_attempts),
-                wait=wait_exponential_jitter(
-                    initial=min_wait,
-                    max=max_wait,
-                    jitter=2.0,
-                ),
-                retry=retry_if_exception_type(exceptions),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
-                reraise=True,
-            )(func)
+            if inspect.iscoroutinefunction(func):
+                @functools.wraps(func)
+                async def async_wrapper(*args, **kwargs):
+                    delay = min_wait
+                    for attempt in range(1, max_attempts + 1):
+                        try:
+                            return await func(*args, **kwargs)
+                        except exceptions as exc:
+                            if attempt >= max_attempts:
+                                raise
+                            retry_attempts_total.labels(
+                                operation=func.__name__,
+                                reason=type(exc).__name__,
+                            ).inc()
+                            logger.warning(
+                                "Retrying %s after %s (attempt %s/%s)",
+                                func.__name__,
+                                type(exc).__name__,
+                                attempt,
+                                max_attempts,
+                            )
+                            await asyncio.sleep(delay)
+                            delay = min(max_wait, max(min_wait, delay * 2))
+
+                return async_wrapper
+
+            @functools.wraps(func)
+            def sync_wrapper(*args, **kwargs):
+                import time
+
+                delay = min_wait
+                for attempt in range(1, max_attempts + 1):
+                    try:
+                        return func(*args, **kwargs)
+                    except exceptions as exc:
+                        if attempt >= max_attempts:
+                            raise
+                        retry_attempts_total.labels(
+                            operation=func.__name__,
+                            reason=type(exc).__name__,
+                        ).inc()
+                        logger.warning(
+                            "Retrying %s after %s (attempt %s/%s)",
+                            func.__name__,
+                            type(exc).__name__,
+                            attempt,
+                            max_attempts,
+                        )
+                        time.sleep(delay)
+                        delay = min(max_wait, max(min_wait, delay * 2))
+
+            return sync_wrapper
 
         return decorator
 
@@ -93,13 +123,18 @@ class ObservabilityManager:
         self.sentry_configured = False
 
     def setup_tracing(self, jaeger_endpoint: Optional[str] = None) -> bool:
-        """Configure Jaeger export when an endpoint is explicitly supplied."""
+        """Configure Jaeger export only when the SDK and endpoint both exist."""
 
         if not jaeger_endpoint:
             logger.info("Jaeger endpoint not configured; tracing export disabled")
             return False
 
         try:
+            import opentelemetry.trace as trace
+            from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+            from opentelemetry.sdk.trace import TracerProvider
+            from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
             provider = TracerProvider()
             exporter = JaegerExporter(collector_endpoint=jaeger_endpoint)
             provider.add_span_processor(BatchSpanProcessor(exporter))
@@ -108,19 +143,25 @@ class ObservabilityManager:
             self.tracing_configured = True
             logger.info("OpenTelemetry tracing configured for %s", jaeger_endpoint)
             return True
+        except ImportError:
+            logger.warning("OpenTelemetry/Jaeger packages unavailable; tracing disabled")
         except Exception:
-            self.tracer = None
-            self.tracing_configured = False
             logger.exception("Tracing setup failed; continuing without tracing export")
-            return False
+
+        self.tracer = None
+        self.tracing_configured = False
+        return False
 
     def setup_error_tracking(self, dsn: Optional[str] = None) -> bool:
-        """Configure Sentry only when a DSN is explicitly supplied."""
+        """Configure Sentry only when the SDK and DSN are both available."""
 
         if not dsn:
             return False
 
         try:
+            import sentry_sdk
+            from sentry_sdk.integrations.fastapi import FastApiIntegration
+
             sentry_sdk.init(
                 dsn=dsn,
                 integrations=[FastApiIntegration()],
@@ -130,10 +171,13 @@ class ObservabilityManager:
             self.sentry_configured = True
             logger.info("Sentry error tracking configured")
             return True
+        except ImportError:
+            logger.warning("Sentry SDK unavailable; remote error tracking disabled")
         except Exception:
-            self.sentry_configured = False
             logger.exception("Sentry setup failed; continuing without remote error tracking")
-            return False
+
+        self.sentry_configured = False
+        return False
 
     @asynccontextmanager
     async def trace_operation(
@@ -183,8 +227,6 @@ class SystemMonitor:
                     except Exception:
                         pass
             except ImportError:
-                # GPU telemetry is optional. Capability reporting handles the
-                # absence explicitly; this loop must not fabricate values.
                 pass
             except Exception as exc:
                 logger.debug("GPU monitoring unavailable: %s", exc)
