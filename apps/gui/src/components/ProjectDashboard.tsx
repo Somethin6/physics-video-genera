@@ -7,7 +7,6 @@ import { ProjectDraft } from '@/components/ProjectCreation'
 
 interface ProjectDashboardProps {
   projects: Project[]
-  onUpdateProject: (project: Project) => void
   onCreateProject?: (project: ProjectDraft) => void
 }
 
@@ -15,7 +14,6 @@ const statusLabel = (status: Project['status']) => status.replaceAll('-', ' ')
 
 export default function ProjectDashboard({
   projects,
-  onUpdateProject: _onUpdateProject,
   onCreateProject,
 }: ProjectDashboardProps) {
   const createDemoRequest = () => {
@@ -34,7 +32,7 @@ export default function ProjectDashboard({
             <div>
               <CardTitle>Request Ledger</CardTitle>
               <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                These entries are local GUI request records. They are not renderer jobs and their local status/progress metadata should not be read as backend execution evidence.
+                These entries are local GUI request records. They are not renderer jobs and their local status metadata should not be read as backend execution evidence.
               </p>
             </div>
             <Badge variant="outline">{projects.length} local records</Badge>
