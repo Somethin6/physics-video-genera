@@ -27,7 +27,6 @@ from .core.dsl_models import (
     SceneRequest,
 )
 from .core.fixtures import build_fixture_plan
-from .core.media_pipeline import initialize_media_pipeline
 from .core.observability import (
     observability_manager,
     operation_duration_seconds,
@@ -60,24 +59,6 @@ class SystemStatus(BaseModel):
     observability: Dict[str, bool] = Field(default_factory=dict)
 
 
-class PipelineConfig(BaseModel):
-    """Pipeline configuration model retained for API/config compatibility."""
-
-    llm_model: str = "gpt-neox-20b-q4"
-    max_gpu_layers: int = 28
-    render_quality: str = "preview"
-    target_framerate: int = 30
-    ocio_config: Optional[str] = None
-    enable_sandbox: bool = True
-    quality_thresholds: Dict[str, float] = Field(
-        default_factory=lambda: {
-            "ssim_minimum": 0.85,
-            "vmaf_minimum": 70.0,
-            "text_legibility_minimum": 0.80,
-        }
-    )
-
-
 active_pipelines: Dict[str, PipelineStatus] = {}
 websocket_connections: List[WebSocket] = []
 
@@ -93,10 +74,6 @@ async def lifespan(app: FastAPI):
         jaeger_endpoint=os.getenv("JAEGER_ENDPOINT", "http://localhost:14268/api/traces"),
         sentry_dsn=os.getenv("SENTRY_DSN"),
     )
-
-    ocio_config = os.getenv("OCIO", "/config/ocio/config.ocio")
-    if not initialize_media_pipeline(ocio_config):
-        logger.warning("Media pipeline initialization failed; related capabilities are unavailable")
 
     monitor_task = asyncio.create_task(system_monitor.start_monitoring())
     logger.info(
