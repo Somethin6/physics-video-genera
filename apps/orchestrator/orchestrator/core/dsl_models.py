@@ -173,18 +173,22 @@ class ErrorCode(BaseModel):
 
 
 class QualityMetrics(BaseModel):
-    """Quality analysis metrics for frames/videos."""
+    """Directly measured or explicitly heuristic frame metrics.
 
-    ssim_score: float = Field(..., ge=0.0, le=1.0)
-    optical_flow_stability: float = Field(..., ge=0.0, le=1.0)
-    text_legibility: float = Field(..., ge=0.0, le=1.0)
-    color_accuracy: float = Field(..., ge=0.0, le=1.0)
-    motion_artifacts: int = Field(..., ge=0)
-    compression_artifacts: int = Field(..., ge=0)
+    ``reference_ssim`` is populated only when a compatible reference frame is
+    supplied. The remaining values are image statistics, not claims of semantic
+    text recognition, temporal motion analysis, or calibrated color accuracy.
+    """
+
+    reference_ssim: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    sharpness_variance: float = Field(..., ge=0.0)
+    edge_density: float = Field(..., ge=0.0, le=1.0)
+    clipping_fraction: float = Field(..., ge=0.0, le=1.0)
+    block_boundary_ratio: float = Field(..., ge=0.0)
 
 
 class QualityIssue(BaseModel):
-    """Quality issue detected during analysis."""
+    """Quality issue emitted from an explicit threshold or analysis failure."""
 
     type: str
     severity: Literal["low", "medium", "high", "critical"]
@@ -195,11 +199,11 @@ class QualityIssue(BaseModel):
 
 
 class FrameAnalysis(BaseModel):
-    """Analysis results for a single frame."""
+    """Measured frame statistics plus a transparent heuristic gate score."""
 
     frame_index: int
     timestamp: float
     metrics: QualityMetrics
     issues: List[QualityIssue] = Field(default_factory=list)
-    overall_score: float = Field(..., ge=0.0, le=1.0)
+    heuristic_score: float = Field(..., ge=0.0, le=1.0)
     analysis_duration: float
